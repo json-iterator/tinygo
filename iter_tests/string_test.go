@@ -24,16 +24,3 @@ func Test_string_missing_starting_quote(t *testing.T) {
 		t.Fail()
 	}
 }
-
-func Test_null_as_string(t *testing.T) {
-	iter := jsoniter.ParseBytes([]byte(`null`))
-	if iter.WhatIsNext() != jsoniter.NullValue {
-		t.Fail()
-	}
-	if iter.ReadString() != "" {
-		t.Fail()
-	}
-	if iter.Error != nil {
-		t.Fail()
-	}
-}

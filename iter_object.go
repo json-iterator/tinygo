@@ -121,28 +121,3 @@ func (iter *Iterator) readObjectStart() bool {
 	iter.ReportError("readObjectStart", "expect { or n, but found "+string([]byte{c}))
 	return false
 }
-
-func (iter *Iterator) readObjectFieldAsBytes() (ret []byte) {
-	str := iter.ReadStringAsSlice()
-	if iter.skipWhitespacesWithoutLoadMore() {
-		if ret == nil {
-			ret = make([]byte, len(str))
-			copy(ret, str)
-		}
-	}
-	if iter.buf[iter.head] != ':' {
-		iter.ReportError("readObjectFieldAsBytes", "expect : after object field, but found "+string([]byte{iter.buf[iter.head]}))
-		return
-	}
-	iter.head++
-	if iter.skipWhitespacesWithoutLoadMore() {
-		if ret == nil {
-			ret = make([]byte, len(str))
-			copy(ret, str)
-		}
-	}
-	if ret == nil {
-		return str
-	}
-	return ret
-}

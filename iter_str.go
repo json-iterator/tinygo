@@ -5,6 +5,7 @@ import (
 	"unicode/utf16"
 )
 
+// AssertIsString search the next value to decode and assert its type
 func (iter *Iterator) AssertIsString() bool {
 	c := iter.nextToken()
 	switch c {
@@ -36,32 +37,48 @@ func (iter *Iterator) AssertIsString() bool {
 	return false
 }
 
-// ReadString read string from iterator
+// ReadString assume current token is at beginning of a string
 func (iter *Iterator) ReadString() (ret string) {
-	c := iter.nextToken()
-	if c == '"' {
-		for i := iter.head; i < len(iter.buf); i++ {
-			c := iter.buf[i]
-			if c == '"' {
-				ret = string(iter.buf[iter.head:i])
-				iter.head = i + 1
-				return ret
-			} else if c == '\\' {
-				break
-			} else if c < ' ' {
-				iter.ReportError("ReadString",
-					fmt.Sprintf(`invalid control character found: %d`, c))
-				return
-			}
-		}
-		iter.ReportError("ReadString", `missing "`)
-		return ""
-	} else if c == 'n' {
-		iter.skipThreeBytes('u', 'l', 'l')
+	if iter.buf[iter.head] != '"' {
+		iter.ReportError("ReadString", `expects ", but found `+string([]byte{iter.buf[iter.head]}))
 		return ""
 	}
-	iter.ReportError("ReadString", `expects " or n, but found `+string([]byte{c}))
+	iter.head++
+	for i := iter.head; i < len(iter.buf); i++ {
+		c := iter.buf[i]
+		if c == '"' {
+			ret = string(iter.buf[iter.head:i])
+			iter.head = i + 1
+			return ret
+		} else if c == '\\' {
+			return iter.readStringSlowPath()
+		} else if c < ' ' {
+			iter.ReportError("ReadString",
+				fmt.Sprintf(`invalid control character found: %d`, c))
+			return
+		}
+	}
+	iter.ReportError("ReadString", `missing "`)
 	return ""
+}
+
+func (iter *Iterator) readStringSlowPath() (ret string) {
+	var str []byte
+	var c byte
+	for iter.head < len(iter.buf) {
+		c = iter.readByte()
+		if c == '"' {
+			return string(str)
+		}
+		if c == '\\' {
+			c = iter.readByte()
+			str = iter.readEscapedChar(c, str)
+		} else {
+			str = append(str, c)
+		}
+	}
+	iter.ReportError("readStringSlowPath", "unexpected end of input")
+	return
 }
 
 func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {
@@ -122,38 +139,6 @@ func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {
 		return nil
 	}
 	return str
-}
-
-// ReadStringAsSlice read string from iterator without copying into string form.
-// The []byte can not be kept, as it will change after next iterator call.
-func (iter *Iterator) ReadStringAsSlice() (ret []byte) {
-	c := iter.nextToken()
-	if c == '"' {
-		for i := iter.head; i < len(iter.buf); i++ {
-			// require ascii string and no escape
-			// for: field name, base64, number
-			if iter.buf[i] == '"' {
-				// fast path: reuse the underlying buffer
-				ret = iter.buf[iter.head:i]
-				iter.head = i + 1
-				return ret
-			}
-		}
-		readLen := len(iter.buf) - iter.head
-		copied := make([]byte, readLen, readLen*2)
-		copy(copied, iter.buf[iter.head:len(iter.buf)])
-		iter.head = len(iter.buf)
-		for iter.Error == nil {
-			c := iter.readByte()
-			if c == '"' {
-				return copied
-			}
-			copied = append(copied, c)
-		}
-		return copied
-	}
-	iter.ReportError("ReadStringAsSlice", `expects " or n, but found `+string([]byte{c}))
-	return
 }
 
 func (iter *Iterator) readU4() (ret rune) {
