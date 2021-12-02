@@ -100,7 +100,7 @@ func genArray(arrayType *ast.ArrayType) {
 		reportError(fmt.Errorf("unknown element type of Array"))
 		return
 	}
-	_l(`    if iter.AssertIsString() && !iter.SkipNull() {`)
+	_l(`    if iter.AssertIsString() && !iter.ReadNull() {`)
 	_l(`      if i == len(val) {`)
 	_f(`        val = append(val, %s)`, readElement)
 	_l(`      } else {`)

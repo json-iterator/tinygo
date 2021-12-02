@@ -2,7 +2,6 @@ package jsoniter
 
 import (
 	"fmt"
-	"io"
 )
 
 // ValueType the type for JSON element
@@ -123,9 +122,7 @@ func (iter *Iterator) isObjectEnd() bool {
 // ReportError record a error in iterator instance with current position.
 func (iter *Iterator) ReportError(operation string, msg string) {
 	if iter.Error != nil {
-		if iter.Error != io.EOF {
-			return
-		}
+		return
 	}
 	peekStart := iter.head - 10
 	if peekStart < 0 {
@@ -147,6 +144,13 @@ func (iter *Iterator) ReportError(operation string, msg string) {
 	context := string(iter.buf[contextStart:contextEnd])
 	iter.Error = fmt.Errorf("%s: %s, error found in #%v byte of ...|%s|..., bigger context ...|%s|...",
 		operation, msg, iter.head-peekStart, parsing, context)
+}
+
+func (iter *Iterator) reportError(err error) {
+	if iter.Error != nil {
+		return
+	}
+	iter.Error = err
 }
 
 // CurrentBuffer gets current buffer as string for debugging purpose

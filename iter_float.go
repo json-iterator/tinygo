@@ -2,7 +2,6 @@ package jsoniter
 
 import (
 	"encoding/json"
-	"io"
 	"math/big"
 	"strconv"
 	"strings"
@@ -35,16 +34,13 @@ func init() {
 // ReadBigFloat read big.Float
 func (iter *Iterator) ReadBigFloat() (ret *big.Float) {
 	str := iter.readNumberAsString()
-	if iter.Error != nil && iter.Error != io.EOF {
-		return nil
-	}
 	prec := 64
 	if len(str) > prec {
 		prec = len(str)
 	}
 	val, _, err := big.ParseFloat(str, 10, uint(prec), big.ToZero)
 	if err != nil {
-		iter.Error = err
+		iter.reportError(err)
 		return nil
 	}
 	return val
@@ -53,9 +49,6 @@ func (iter *Iterator) ReadBigFloat() (ret *big.Float) {
 // ReadBigInt read big.Int
 func (iter *Iterator) ReadBigInt() (ret *big.Int) {
 	str := iter.readNumberAsString()
-	if iter.Error != nil && iter.Error != io.EOF {
-		return nil
-	}
 	ret = big.NewInt(0)
 	var success bool
 	ret, success = ret.SetString(str, 10)
@@ -68,7 +61,7 @@ func (iter *Iterator) ReadBigInt() (ret *big.Int) {
 
 //ReadFloat32 read float32
 func (iter *Iterator) ReadFloat32() (ret float32) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		return -iter.readPositiveFloat32()
 	}
@@ -173,9 +166,6 @@ load_loop:
 			}
 		}
 	}
-	if iter.Error != nil && iter.Error != io.EOF {
-		return
-	}
 	if len(str) == 0 {
 		iter.ReportError("readNumberAsString", "invalid number")
 	}
@@ -184,9 +174,6 @@ load_loop:
 
 func (iter *Iterator) readFloat32SlowPath() (ret float32) {
 	str := iter.readNumberAsString()
-	if iter.Error != nil && iter.Error != io.EOF {
-		return
-	}
 	errMsg := validateFloat(str)
 	if errMsg != "" {
 		iter.ReportError("readFloat32SlowPath", errMsg)
@@ -194,7 +181,7 @@ func (iter *Iterator) readFloat32SlowPath() (ret float32) {
 	}
 	val, err := strconv.ParseFloat(str, 32)
 	if err != nil {
-		iter.Error = err
+		iter.reportError(err)
 		return
 	}
 	return float32(val)
@@ -202,7 +189,7 @@ func (iter *Iterator) readFloat32SlowPath() (ret float32) {
 
 // ReadFloat64 read float64
 func (iter *Iterator) ReadFloat64() (ret float64) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		return -iter.readPositiveFloat64()
 	}
@@ -295,9 +282,6 @@ non_decimal_loop:
 
 func (iter *Iterator) readFloat64SlowPath() (ret float64) {
 	str := iter.readNumberAsString()
-	if iter.Error != nil && iter.Error != io.EOF {
-		return
-	}
 	errMsg := validateFloat(str)
 	if errMsg != "" {
 		iter.ReportError("readFloat64SlowPath", errMsg)
@@ -305,7 +289,7 @@ func (iter *Iterator) readFloat64SlowPath() (ret float64) {
 	}
 	val, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		iter.Error = err
+		iter.reportError(err)
 		return
 	}
 	return val

@@ -35,7 +35,7 @@ func (iter *Iterator) ReadInt() int {
 
 // ReadInt8 read int8
 func (iter *Iterator) ReadInt8() (ret int8) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		val := iter.readUint32(iter.readByte())
 		if val > math.MaxInt8+1 {
@@ -54,7 +54,7 @@ func (iter *Iterator) ReadInt8() (ret int8) {
 
 // ReadUint8 read uint8
 func (iter *Iterator) ReadUint8() (ret uint8) {
-	val := iter.readUint32(iter.nextToken())
+	val := iter.readUint32(iter.readByte())
 	if val > math.MaxUint8 {
 		iter.ReportError("ReadUint8", "overflow: "+strconv.FormatInt(int64(val), 10))
 		return
@@ -64,7 +64,7 @@ func (iter *Iterator) ReadUint8() (ret uint8) {
 
 // ReadInt16 read int16
 func (iter *Iterator) ReadInt16() (ret int16) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		val := iter.readUint32(iter.readByte())
 		if val > math.MaxInt16+1 {
@@ -83,7 +83,7 @@ func (iter *Iterator) ReadInt16() (ret int16) {
 
 // ReadUint16 read uint16
 func (iter *Iterator) ReadUint16() (ret uint16) {
-	val := iter.readUint32(iter.nextToken())
+	val := iter.readUint32(iter.readByte())
 	if val > math.MaxUint16 {
 		iter.ReportError("ReadUint16", "overflow: "+strconv.FormatInt(int64(val), 10))
 		return
@@ -93,7 +93,7 @@ func (iter *Iterator) ReadUint16() (ret uint16) {
 
 // ReadInt32 read int32
 func (iter *Iterator) ReadInt32() (ret int32) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		val := iter.readUint32(iter.readByte())
 		if val > math.MaxInt32+1 {
@@ -112,7 +112,7 @@ func (iter *Iterator) ReadInt32() (ret int32) {
 
 // ReadUint32 read uint32
 func (iter *Iterator) ReadUint32() (ret uint32) {
-	return iter.readUint32(iter.nextToken())
+	return iter.readUint32(iter.readByte())
 }
 
 func (iter *Iterator) readUint32(c byte) (ret uint32) {
@@ -213,7 +213,7 @@ func (iter *Iterator) readUint32(c byte) (ret uint32) {
 
 // ReadInt64 read int64
 func (iter *Iterator) ReadInt64() (ret int64) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == '-' {
 		val := iter.readUint64(iter.readByte())
 		if val > math.MaxInt64+1 {
@@ -232,7 +232,7 @@ func (iter *Iterator) ReadInt64() (ret int64) {
 
 // ReadUint64 read uint64
 func (iter *Iterator) ReadUint64() uint64 {
-	return iter.readUint64(iter.nextToken())
+	return iter.readUint64(iter.readByte())
 }
 
 func (iter *Iterator) readUint64(c byte) (ret uint64) {

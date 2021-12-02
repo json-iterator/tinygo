@@ -7,7 +7,7 @@ func jd_array_string(iter *jsoniter.Iterator, out *[]string) {
   i := 0
   val := *out
   for iter.ReadArray() {
-    if iter.AssertIsString() && !iter.SkipNull() {
+    if iter.AssertIsString() && !iter.ReadNull() {
       if i == len(val) {
         val = append(val, iter.ReadString())
       } else {

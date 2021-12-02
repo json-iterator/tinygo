@@ -177,8 +177,8 @@ func (iter *Iterator) Skip() {
 	}
 }
 
-func (iter *Iterator) SkipNull() bool {
-	if iter.buf[iter.head] == 'n' {
+func (iter *Iterator) ReadNull() bool {
+	if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
 		iter.skipFourBytes('n', 'u', 'l', 'l')
 		return true
 	}
