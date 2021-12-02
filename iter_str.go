@@ -30,8 +30,6 @@ func (iter *Iterator) ReadString() (ret string) {
 		return ""
 	}
 	iter.ReportError("ReadString", `expects " or n, but found `+string([]byte{c}))
-	iter.head--
-	iter.Skip()
 	return ""
 }
 

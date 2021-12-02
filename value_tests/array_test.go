@@ -49,7 +49,14 @@ func Test_one_element_array(t *testing.T) {
 }
 
 func Test_incompatible_array_element(t *testing.T) {
-	input := `[1, 2, 3]`
+	input := `[10, 20, 30]`
+	val1 := []string{"hello"}
+	val2 := []string{"hello"}
+	compareWithStdlib(input, &val1, &val2)
+}
+
+func Test_recover_incompatible_array_element(t *testing.T) {
+	input := `[100, "world"]`
 	val1 := []string{"hello"}
 	val2 := []string{"hello"}
 	compareWithStdlib(input, &val1, &val2)

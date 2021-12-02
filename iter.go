@@ -17,8 +17,8 @@ const (
 	StringValue
 	// NumberValue JSON element 100 or 0.10
 	NumberValue
-	// NilValue JSON element null
-	NilValue
+	// NullValue JSON element null
+	NullValue
 	// BoolValue JSON element true or false
 	BoolValue
 	// ArrayValue JSON element []
@@ -67,7 +67,7 @@ func init() {
 	valueTypes['9'] = NumberValue
 	valueTypes['t'] = BoolValue
 	valueTypes['f'] = BoolValue
-	valueTypes['n'] = NilValue
+	valueTypes['n'] = NullValue
 	valueTypes['['] = ArrayValue
 	valueTypes['{'] = ObjectValue
 }
@@ -166,9 +166,6 @@ func (iter *Iterator) readByte() (ret byte) {
 }
 
 func (iter *Iterator) unreadByte() {
-	if iter.Error != nil {
-		return
-	}
 	iter.head--
 	return
 }
