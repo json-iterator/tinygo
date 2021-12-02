@@ -7,17 +7,16 @@ func jd_array_string(iter *jsoniter.Iterator, out *[]string) {
   i := 0
   val := *out
   for iter.ReadArray() {
-    if iter.WhatIsNext() == jsoniter.StringValue {
+    if iter.AssertIsString() && !iter.SkipNull() {
       if i == len(val) {
         val = append(val, iter.ReadString())
       } else {
         val[i] = iter.ReadString()
       }
-    } else {
-      iter.ReportError("decode array", "expect string")
-      iter.Skip()
+    } else if i == len(val) {
       if i == len(val) {
-        val = append(val, "")
+        var empty string
+        val = append(val, empty)
       }
     }
     i++

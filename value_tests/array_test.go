@@ -34,29 +34,36 @@ func compareWithStdlib(input string, val1 interface{}, val2 interface{}) {
 	}
 }
 
-func Test_empty_array(t *testing.T) {
+func Test_array1(t *testing.T) {
 	input := `[]`
 	var val1 []string
 	var val2 []string
 	compareWithStdlib(input, &val1, &val2)
 }
 
-func Test_one_element_array(t *testing.T) {
+func Test_array2(t *testing.T) {
 	input := `["hello"]`
 	var val1 []string
 	var val2 []string
 	compareWithStdlib(input, &val1, &val2)
 }
 
-func Test_incompatible_array_element(t *testing.T) {
+func Test_array3(t *testing.T) {
 	input := `[10, 20, 30]`
 	val1 := []string{"hello"}
 	val2 := []string{"hello"}
 	compareWithStdlib(input, &val1, &val2)
 }
 
-func Test_recover_incompatible_array_element(t *testing.T) {
+func Test_array4(t *testing.T) {
 	input := `[100, "world"]`
+	val1 := []string{"hello"}
+	val2 := []string{"hello"}
+	compareWithStdlib(input, &val1, &val2)
+}
+
+func Test_array5(t *testing.T) {
+	input := `[null, "world"]`
 	val1 := []string{"hello"}
 	val2 := []string{"hello"}
 	compareWithStdlib(input, &val1, &val2)

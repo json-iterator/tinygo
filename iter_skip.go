@@ -177,6 +177,14 @@ func (iter *Iterator) Skip() {
 	}
 }
 
+func (iter *Iterator) SkipNull() bool {
+	if iter.buf[iter.head] == 'n' {
+		iter.skipFourBytes('n', 'u', 'l', 'l')
+		return true
+	}
+	return false
+}
+
 func (iter *Iterator) skipFourBytes(b1, b2, b3, b4 byte) {
 	if iter.readByte() != b1 {
 		iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))

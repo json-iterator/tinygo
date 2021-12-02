@@ -5,6 +5,37 @@ import (
 	"unicode/utf16"
 )
 
+func (iter *Iterator) AssertIsString() bool {
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		iter.unreadByte()
+		return true
+	case 'n':
+		// null is considered as string
+		iter.unreadByte()
+		return true
+	case 't':
+		iter.ReportError("AssertIsString", "unexpected boolean")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+	case 'f':
+		iter.ReportError("AssertIsString", "unexpected boolean")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		iter.ReportError("AssertIsString", "unexpected number")
+		iter.skipNumber()
+	case '[':
+		iter.ReportError("AssertIsString", "unexpected array")
+		iter.skipArray()
+	case '{':
+		iter.ReportError("AssertIsString", "unexpected object")
+		iter.skipObject()
+	default:
+		iter.ReportError("AssertIsString", fmt.Sprintf("unknown data: %v", c))
+	}
+	return false
+}
+
 // ReadString read string from iterator
 func (iter *Iterator) ReadString() (ret string) {
 	c := iter.nextToken()

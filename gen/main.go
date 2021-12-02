@@ -87,9 +87,11 @@ func genArray(arrayType *ast.ArrayType) {
 	_l("  i := 0")
 	_l("  val := *out")
 	_l("  for iter.ReadArray() {")
+	readElement := ""
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
 		if x.Name == "string" {
+			readElement = "iter.ReadString()"
 		} else {
 			reportError(fmt.Errorf("unknown element type of Array: %s", x.Name))
 			return
@@ -98,17 +100,16 @@ func genArray(arrayType *ast.ArrayType) {
 		reportError(fmt.Errorf("unknown element type of Array"))
 		return
 	}
-	_l(`    if iter.WhatIsNext() == jsoniter.StringValue {`)
+	_l(`    if iter.AssertIsString() && !iter.SkipNull() {`)
 	_l(`      if i == len(val) {`)
-	_l(`        val = append(val, iter.ReadString())`)
+	_f(`        val = append(val, %s)`, readElement)
 	_l(`      } else {`)
-	_l(`        val[i] = iter.ReadString()`)
+	_f(`        val[i] = %s`, readElement)
 	_l(`      }`)
-	_l(`    } else {`)
-	_l(`      iter.ReportError("decode array", "expect string")`)
-	_l(`      iter.Skip()`)
+	_l(`    } else if i == len(val) {`)
 	_l(`      if i == len(val) {`)
-	_l(`        val = append(val, "")`)
+	_f(`        var empty %s`, nodeToString(arrayType.Elt))
+	_l(`        val = append(val, empty)`)
 	_l(`      }`)
 	_l(`    }`)
 	_l(`    i++`)
