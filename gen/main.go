@@ -28,10 +28,10 @@ func init() {
 }
 
 func main() {
-	appendLine(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
-	appendNewLine()
-	appendLine(`import jsoniter "github.com/json-iterator/tinygo"`)
-	appendNewLine()
+	_l(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
+	_n()
+	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
+	_n()
 	typeSpec := locateTypeSpec()
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
@@ -48,7 +48,7 @@ func reportError(err error) {
 	panic(err)
 }
 
-func appendLine(line string) {
+func _l(line string) {
 	for i := 0; i < indent; i++ {
 		lines = append(lines, ' ')
 		print(" ")
@@ -58,18 +58,12 @@ func appendLine(line string) {
 	println(line)
 }
 
-func appendNewLine() {
-	appendLine("")
+func _n() {
+	_l("")
 }
 
-func enter(line string) {
-	appendLine(line)
-	indent += 4
-}
-
-func exit(line string) {
-	indent -= 4
-	appendLine(line)
+func _f(format string, a ...interface{}) {
+	_l(fmt.Sprintf(format, a...))
 }
 
 func nodeToString(node ast.Node) string {
@@ -88,14 +82,15 @@ func escapeTypeName(typeName string) string {
 
 func genArray(arrayType *ast.ArrayType) {
 	typeName := nodeToString(arrayType)
-	enter(fmt.Sprintf("func jd_%s(iter *jsoniter.Iterator) %s {", escapeTypeName(typeName), typeName))
-	appendLine(fmt.Sprintf("var val = %s{}", typeName))
-	appendLine("if iter.Error != nil { return val }")
-	enter("for iter.ReadArray() {")
+	_f("func jd_%s(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
+	_l("  if iter.Error != nil { return }")
+	_l("  i := 0")
+	_l("  val := *out")
+	_l("  for iter.ReadArray() {")
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
 		if x.Name == "string" {
-			appendLine("val = append(val, iter.ReadString())")
+			_l("    elem := iter.ReadString()")
 		} else {
 			reportError(fmt.Errorf("unknown element type of Array: %s", x.Name))
 			return
@@ -104,9 +99,21 @@ func genArray(arrayType *ast.ArrayType) {
 		reportError(fmt.Errorf("unknown element type of Array"))
 		return
 	}
-	exit("}")
-	appendLine("return val")
-	exit("}")
+	_l(`    if i < len(val) {`)
+	_l(`      if iter.Error == nil {`)
+	_l(`        val[i] = elem`)
+	_l(`      }`)
+	_l(`    } else {`)
+	_l(`      val = append(val, elem)`)
+	_l(`    }`)
+	_l(`    i++`)
+	_l("  }")
+	_l("  if i == 0 {")
+	_f("    *out = %s{}", typeName)
+	_l("  } else {")
+	_l("    *out = val[:i]")
+	_l("  }")
+	_l("}")
 }
 
 func locateTypeSpec() *ast.TypeSpec {

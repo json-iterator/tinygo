@@ -23,32 +23,16 @@ func (iter *Iterator) ReadString() (ret string) {
 				return
 			}
 		}
-		return iter.readStringSlowPath()
+		iter.ReportError("ReadString", `missing "`)
+		return ""
 	} else if c == 'n' {
 		iter.skipThreeBytes('u', 'l', 'l')
 		return ""
 	}
 	iter.ReportError("ReadString", `expects " or n, but found `+string([]byte{c}))
-	return
-}
-
-func (iter *Iterator) readStringSlowPath() (ret string) {
-	var str []byte
-	var c byte
-	for iter.Error == nil {
-		c = iter.readByte()
-		if c == '"' {
-			return string(str)
-		}
-		if c == '\\' {
-			c = iter.readByte()
-			str = iter.readEscapedChar(c, str)
-		} else {
-			str = append(str, c)
-		}
-	}
-	iter.ReportError("readStringSlowPath", "unexpected end of input")
-	return
+	iter.head--
+	iter.Skip()
+	return ""
 }
 
 func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {
