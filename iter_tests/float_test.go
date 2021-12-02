@@ -15,12 +15,22 @@ func Test_read_float(t *testing.T) {
 	}
 	for _, input := range inputs {
 		t.Run(fmt.Sprintf("%v", input), func(t *testing.T) {
-			iter := jsoniter.ParseBytes([]byte(input + ","))
+			iter := jsoniter.ParseBytes([]byte(input))
 			expected, err := strconv.ParseFloat(input, 32)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if float32(expected) != iter.ReadFloat32() {
+				t.Fatal()
+			}
+		})
+		t.Run(fmt.Sprintf("%v", input), func(t *testing.T) {
+			iter := jsoniter.ParseBytes([]byte(input))
+			expected, err := strconv.ParseFloat(input, 64)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if expected != iter.ReadFloat64() {
 				t.Fatal()
 			}
 		})

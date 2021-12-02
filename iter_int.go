@@ -7,6 +7,8 @@ import (
 
 var intDigits []int8
 
+const invalidCharForNumber = int8(-1)
+
 func init() {
 	intDigits = make([]int8, 256)
 	for i := 0; i < len(intDigits); i++ {
