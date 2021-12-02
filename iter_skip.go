@@ -123,21 +123,18 @@ func (iter *Iterator) findStringEnd() (int, bool) {
 	return -1, true // end with \
 }
 
-// ReadNil reads a json object as nil and
-// returns whether it's a nil or not
-func (iter *Iterator) ReadNil() (ret bool) {
-	c := iter.nextToken()
-	if c == 'n' {
-		iter.skipThreeBytes('u', 'l', 'l') // null
+// ReadNull will read null as true, otherwise false
+func (iter *Iterator) ReadNull() bool {
+	if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+		iter.skipFourBytes('n', 'u', 'l', 'l')
 		return true
 	}
-	iter.unreadByte()
 	return false
 }
 
 // ReadBool reads a json object as BoolValue
 func (iter *Iterator) ReadBool() (ret bool) {
-	c := iter.nextToken()
+	c := iter.readByte()
 	if c == 't' {
 		iter.skipThreeBytes('r', 'u', 'e')
 		return true
@@ -152,7 +149,7 @@ func (iter *Iterator) ReadBool() (ret bool) {
 
 // Skip skips a json object and positions to relatively the next json object
 func (iter *Iterator) Skip() {
-	c := iter.nextToken()
+	c := iter.readByte()
 	switch c {
 	case '"':
 		iter.skipString()
@@ -175,14 +172,6 @@ func (iter *Iterator) Skip() {
 		iter.ReportError("Skip", fmt.Sprintf("do not know how to skip: %v", c))
 		return
 	}
-}
-
-func (iter *Iterator) ReadNull() bool {
-	if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
-		iter.skipFourBytes('n', 'u', 'l', 'l')
-		return true
-	}
-	return false
 }
 
 func (iter *Iterator) skipFourBytes(b1, b2, b3, b4 byte) {
