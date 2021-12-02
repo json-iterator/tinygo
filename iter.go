@@ -8,6 +8,8 @@ import (
 // ValueType the type for JSON element
 type ValueType int
 
+type RawMessage []byte
+
 const (
 	// InvalidValue invalid JSON element
 	InvalidValue ValueType = iota
