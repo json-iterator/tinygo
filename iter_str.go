@@ -39,11 +39,11 @@ func (iter *Iterator) AssertIsString() bool {
 
 // ReadString assume current token is at beginning of a string
 func (iter *Iterator) ReadString() (ret string) {
-	if iter.buf[iter.head] != '"' {
-		iter.ReportError("ReadString", `expects ", but found `+string([]byte{iter.buf[iter.head]}))
+	c := iter.readByte()
+	if c != '"' {
+		iter.ReportError("ReadString", `expects ", but found `+string([]byte{c}))
 		return ""
 	}
-	iter.head++
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		if c == '"' {

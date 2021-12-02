@@ -160,9 +160,12 @@ func (iter *Iterator) CurrentBuffer() string {
 }
 
 func (iter *Iterator) readByte() (ret byte) {
-	ret = iter.buf[iter.head]
-	iter.head++
-	return ret
+	if iter.head < len(iter.buf) {
+		ret = iter.buf[iter.head]
+		iter.head++
+		return ret
+	}
+	return 0
 }
 
 func (iter *Iterator) unreadByte() {
