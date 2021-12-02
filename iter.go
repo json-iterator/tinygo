@@ -165,6 +165,7 @@ func (iter *Iterator) readByte() (ret byte) {
 		iter.head++
 		return ret
 	}
+	iter.ReportError("readByte", "EOF")
 	return 0
 }
 

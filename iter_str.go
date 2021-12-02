@@ -87,26 +87,17 @@ func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {
 		r := iter.readU4()
 		if utf16.IsSurrogate(r) {
 			c = iter.readByte()
-			if iter.Error != nil {
-				return nil
-			}
 			if c != '\\' {
 				iter.unreadByte()
 				str = appendRune(str, r)
 				return str
 			}
 			c = iter.readByte()
-			if iter.Error != nil {
-				return nil
-			}
 			if c != 'u' {
 				str = appendRune(str, r)
 				return iter.readEscapedChar(c, str)
 			}
 			r2 := iter.readU4()
-			if iter.Error != nil {
-				return nil
-			}
 			combined := utf16.DecodeRune(r, r2)
 			if combined == '\uFFFD' {
 				str = appendRune(str, r)
@@ -144,9 +135,6 @@ func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {
 func (iter *Iterator) readU4() (ret rune) {
 	for i := 0; i < 4; i++ {
 		c := iter.readByte()
-		if iter.Error != nil {
-			return
-		}
 		if c >= '0' && c <= '9' {
 			ret = ret*16 + rune(c-'0')
 		} else if c >= 'a' && c <= 'f' {
