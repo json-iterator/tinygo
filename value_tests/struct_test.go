@@ -1,15 +1,18 @@
 package value_tests
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
+
+	jsoniter "github.com/json-iterator/tinygo"
 )
 
 func Test_empty_struct(t *testing.T) {
-	bytes, _ := json.Marshal(&StructOfStringInt{
-		Name:  "hello",
-		Price: 100,
-	})
-	fmt.Println(string(bytes))
+	iter := jsoniter.ParseBytes([]byte(`{"Name":"hello","Price":100}`))
+	var val StructOfStringInt
+	jd_StructOfStringInt(iter, &val)
+	if iter.Error != nil {
+		t.Fatal(iter.Error)
+	}
+	fmt.Println(val)
 }

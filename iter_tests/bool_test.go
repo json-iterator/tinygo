@@ -8,16 +8,18 @@ import (
 
 func Test_read_true(t *testing.T) {
 	iter := jsoniter.ParseBytes([]byte("true"))
-	iter.AssertIsBool()
-	if iter.ReadBool() == false {
+	var val bool
+	iter.ReadBool(&val)
+	if val == false {
 		t.Fatal()
 	}
 }
 
 func Test_read_false(t *testing.T) {
 	iter := jsoniter.ParseBytes([]byte("false"))
-	iter.AssertIsBool()
-	if iter.ReadBool() == true {
+	var val bool
+	iter.ReadBool(&val)
+	if val == true {
 		t.Fatal()
 	}
 }

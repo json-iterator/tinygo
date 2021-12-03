@@ -1,49 +1,24 @@
 package jsoniter
 
-import "fmt"
-
-// call in this sequence AssertIsBool => ReadBool
-
-// AssertIsBool tell if the value is bool, otherwise report error and skip
-func (iter *Iterator) AssertIsBool() bool {
+// ReadBool will assign bool to out if found, otherwise the value will be skipped
+func (iter *Iterator) ReadBool(out *bool) error {
 	c := iter.nextToken()
-	switch c {
-	case '"':
-		iter.ReportError("AssertIsBool", "unexpected string")
-		iter.skipString()
-	case 'n':
-		// null is not considered as bool, but not a error
-		iter.skipThreeBytes('u', 'l', 'l')
-	case 't':
-		return true
-	case 'f':
-		return true
-	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		iter.ReportError("AssertIsNumber", "unexpected array")
-		iter.skipNumber()
-	case '[':
-		iter.ReportError("AssertIsNumber", "unexpected array")
-		iter.skipArray()
-	case '{':
-		iter.ReportError("AssertIsNumber", "unexpected object")
-		iter.skipObject()
-	default:
-		iter.ReportError("AssertIsNumber", fmt.Sprintf("unknown data: %v", c))
+	if c == 't' {
+		err := iter.skipThreeBytes('r', 'u', 'e')
+		if err == nil {
+			*out = true
+		}
+		return err
 	}
-	return false
-}
-
-// ReadBool reads a json value as bool
-func (iter *Iterator) ReadBool() (ret bool) {
-	c := iter.readByte()
-	if c == 'r' {
-		iter.skipTwoBytes('u', 'e')
-		return true
+	if c == 'f' {
+		err := iter.skipFourBytes('a', 'l', 's', 'e')
+		if err == nil {
+			*out = false
+		}
+		return err
 	}
-	if c == 'a' {
-		iter.skipThreeBytes('l', 's', 'e')
-		return false
-	}
-	iter.ReportError("ReadBool", "expect r or a, but found "+string([]byte{c}))
-	return
+	err := iter.ReportError("ReadBool", "expect t or f, but found "+string([]byte{c}))
+	iter.unreadByte()
+	iter.Skip()
+	return err
 }

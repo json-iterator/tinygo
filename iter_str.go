@@ -5,65 +5,43 @@ import (
 	"unicode/utf16"
 )
 
-// call in this sequence AssertIsString => ReadString
-
-// AssertIsString must be called before ReadString, if the value is not string will be skipped
-func (iter *Iterator) AssertIsString() bool {
+// ReadString will assign string to out if found, otherwise the value will be skipped
+func (iter *Iterator) ReadString(out *string) error {
 	c := iter.nextToken()
-	switch c {
-	case '"':
-		return true
-	case 'n':
-		// null is not considered as string, but not a error
-		iter.skipThreeBytes('u', 'l', 'l')
-	case 't':
-		iter.ReportError("AssertIsString", "unexpected boolean")
-		iter.skipThreeBytes('r', 'u', 'e') // true
-	case 'f':
-		iter.ReportError("AssertIsString", "unexpected boolean")
-		iter.skipFourBytes('a', 'l', 's', 'e') // false
-	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		iter.ReportError("AssertIsString", "unexpected number")
-		iter.skipNumber()
-	case '[':
-		iter.ReportError("AssertIsString", "unexpected array")
-		iter.skipArray()
-	case '{':
-		iter.ReportError("AssertIsString", "unexpected object")
-		iter.skipObject()
-	default:
-		iter.ReportError("AssertIsString", fmt.Sprintf("unknown data: %v", c))
+	if c != '"' {
+		if c == 'n' {
+			iter.skipThreeBytes('u', 'l', 'l') // null
+			return nil
+		}
+		err := iter.ReportError("ReadString", `missing "`)
+		iter.unreadByte()
+		iter.Skip()
+		return err
 	}
-	return false
-}
-
-// ReadString assume current token is at beginning of a string
-func (iter *Iterator) ReadString() (ret string) {
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		if c == '"' {
-			ret = string(iter.buf[iter.head:i])
+			*out = string(iter.buf[iter.head:i])
 			iter.head = i + 1
-			return ret
+			return nil
 		} else if c == '\\' {
-			return iter.readStringSlowPath()
+			return iter.readStringSlowPath(out)
 		} else if c < ' ' {
-			iter.ReportError("ReadString",
+			return iter.ReportError("ReadString",
 				fmt.Sprintf(`invalid control character found: %d`, c))
-			return
 		}
 	}
-	iter.ReportError("ReadString", `missing "`)
-	return ""
+	return iter.ReportError("ReadString", `missing "`)
 }
 
-func (iter *Iterator) readStringSlowPath() (ret string) {
+func (iter *Iterator) readStringSlowPath(out *string) error {
 	var str []byte
 	var c byte
 	for iter.head < len(iter.buf) {
 		c = iter.readByte()
 		if c == '"' {
-			return string(str)
+			*out = string(str)
+			return nil
 		}
 		if c == '\\' {
 			c = iter.readByte()
@@ -72,8 +50,7 @@ func (iter *Iterator) readStringSlowPath() (ret string) {
 			str = append(str, c)
 		}
 	}
-	iter.ReportError("readStringSlowPath", "unexpected end of input")
-	return
+	return iter.ReportError("readStringSlowPath", "unexpected end of input")
 }
 
 func (iter *Iterator) readEscapedChar(c byte, str []byte) []byte {

@@ -118,47 +118,31 @@ func (iter *Iterator) Skip() {
 	}
 }
 
-func (iter *Iterator) skipFourBytes(b1, b2, b3, b4 byte) {
+func (iter *Iterator) skipFourBytes(b1, b2, b3, b4 byte) error {
 	if iter.readByte() != b1 {
-		iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
-		return
+		return iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
 	}
 	if iter.readByte() != b2 {
-		iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
-		return
+		return iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
 	}
 	if iter.readByte() != b3 {
-		iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
-		return
+		return iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
 	}
 	if iter.readByte() != b4 {
-		iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
-		return
+		return iter.ReportError("skipFourBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3, b4})))
 	}
+	return nil
 }
 
-func (iter *Iterator) skipThreeBytes(b1, b2, b3 byte) {
+func (iter *Iterator) skipThreeBytes(b1, b2, b3 byte) error {
 	if iter.readByte() != b1 {
-		iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
-		return
+		return iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
 	}
 	if iter.readByte() != b2 {
-		iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
-		return
+		return iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
 	}
 	if iter.readByte() != b3 {
-		iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
-		return
+		return iter.ReportError("skipThreeBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2, b3})))
 	}
-}
-
-func (iter *Iterator) skipTwoBytes(b1, b2 byte) {
-	if iter.readByte() != b1 {
-		iter.ReportError("skipTwoBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2})))
-		return
-	}
-	if iter.readByte() != b2 {
-		iter.ReportError("skipTwoBytes", fmt.Sprintf("expect %s", string([]byte{b1, b2})))
-		return
-	}
+	return nil
 }

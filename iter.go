@@ -94,7 +94,7 @@ func (iter *Iterator) WhatIsNext() ValueType {
 	return valueType
 }
 
-func (iter *Iterator) skipWhitespacesWithoutLoadMore() bool {
+func (iter *Iterator) skipWhitespaces() {
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		switch c {
@@ -102,9 +102,9 @@ func (iter *Iterator) skipWhitespacesWithoutLoadMore() bool {
 			continue
 		}
 		iter.head = i
-		return false
+		return
 	}
-	return true
+	iter.head = len(iter.buf)
 }
 
 func (iter *Iterator) isObjectEnd() bool {
@@ -120,9 +120,9 @@ func (iter *Iterator) isObjectEnd() bool {
 }
 
 // ReportError record a error in iterator instance with current position.
-func (iter *Iterator) ReportError(operation string, msg string) {
+func (iter *Iterator) ReportError(operation string, msg string) error {
 	if iter.Error != nil {
-		return
+		return iter.Error
 	}
 	peekStart := iter.head - 10
 	if peekStart < 0 {
@@ -144,6 +144,7 @@ func (iter *Iterator) ReportError(operation string, msg string) {
 	context := string(iter.buf[contextStart:contextEnd])
 	iter.Error = fmt.Errorf("%s: %s, error found in #%v byte of ...|%s|..., bigger context ...|%s|...",
 		operation, msg, iter.head-peekStart, parsing, context)
+	return iter.Error
 }
 
 func (iter *Iterator) reportError(err error) {
@@ -174,8 +175,9 @@ func (iter *Iterator) readByte() (ret byte) {
 }
 
 func (iter *Iterator) unreadByte() {
-	iter.head--
-	return
+	if iter.head > 0 {
+		iter.head--
+	}
 }
 
 func (iter *Iterator) nextToken() byte {

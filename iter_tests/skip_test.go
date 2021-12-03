@@ -25,7 +25,9 @@ func Test_skip(t *testing.T) {
 		iter := jsoniter.ParseBytes([]byte(input + `,100`))
 		iter.Skip()
 		iter.ReadArrayMore()
-		if iter.ReadInt() != 100 {
+		var val int
+		iter.ReadInt(&val)
+		if val != 100 {
 			t.Fatal(input)
 		}
 	}
