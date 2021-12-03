@@ -62,15 +62,13 @@ func (iter *Iterator) skipObject() {
 }
 
 func (iter *Iterator) skipString() {
-	for {
-		end, _ := iter.findStringEnd()
-		if end == -1 {
-			iter.ReportError("skipString", "incomplete string")
-			return
-		} else {
-			iter.head = end
-			return
-		}
+	end, _ := iter.findStringEnd()
+	if end == -1 {
+		iter.ReportError("skipString", "incomplete string")
+		return
+	} else {
+		iter.head = end
+		return
 	}
 }
 
@@ -121,15 +119,6 @@ func (iter *Iterator) findStringEnd() (int, bool) {
 
 	}
 	return -1, true // end with \
-}
-
-// ReadNull will read null as true, otherwise false
-func (iter *Iterator) ReadNull() bool {
-	if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
-		iter.skipFourBytes('n', 'u', 'l', 'l')
-		return true
-	}
-	return false
 }
 
 // ReadBool reads a json object as BoolValue

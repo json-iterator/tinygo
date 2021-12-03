@@ -5,17 +5,17 @@ import (
 	"unicode/utf16"
 )
 
-// AssertIsString search the next value to decode and assert its type
+// call in this sequence AssertIsString => ReadString
+
+// AssertIsString must be called before ReadString, if the value is not string will be skipped
 func (iter *Iterator) AssertIsString() bool {
 	c := iter.nextToken()
 	switch c {
 	case '"':
-		iter.unreadByte()
 		return true
 	case 'n':
-		// null is considered as string
-		iter.unreadByte()
-		return true
+		// null is not considered as string, but not a error
+		iter.skipThreeBytes('u', 'l', 'l')
 	case 't':
 		iter.ReportError("AssertIsString", "unexpected boolean")
 		iter.skipThreeBytes('r', 'u', 'e') // true
@@ -39,11 +39,6 @@ func (iter *Iterator) AssertIsString() bool {
 
 // ReadString assume current token is at beginning of a string
 func (iter *Iterator) ReadString() (ret string) {
-	c := iter.readByte()
-	if c != '"' {
-		iter.ReportError("ReadString", `expects ", but found `+string([]byte{c}))
-		return ""
-	}
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		if c == '"' {

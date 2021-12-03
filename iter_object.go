@@ -11,9 +11,6 @@ import (
 func (iter *Iterator) ReadObject() (ret string) {
 	c := iter.nextToken()
 	switch c {
-	case 'n':
-		iter.skipThreeBytes('u', 'l', 'l')
-		return "" // null
 	case '{':
 		c = iter.nextToken()
 		if c == '"' {

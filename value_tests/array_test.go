@@ -1,4 +1,4 @@
-package main
+package value_tests
 
 import (
 	"encoding/json"
@@ -8,12 +8,9 @@ import (
 	jsoniter "github.com/json-iterator/tinygo"
 )
 
-//go:generate go run github.com/json-iterator/tinygo/gen
-type ArrayOfString = []string
-
 func compareWithStdlib(input string, val1 interface{}, val2 interface{}) {
 	iter := jsoniter.ParseBytes([]byte(input))
-	jd_array_string(iter, val1.(*[]string))
+	jd_ArrayOfString(iter, val1.(*[]string))
 	bytes1, err := json.Marshal(val1)
 	if err != nil {
 		panic(err)

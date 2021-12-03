@@ -33,13 +33,18 @@ func main() {
 	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
 	_n()
 	typeSpec := locateTypeSpec()
+	typeName := typeSpec.Name.Name
+	_f("func jd_%s(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
 		genArray(x)
+	case *ast.StructType:
+		genStruct(x)
 	default:
 		reportError(fmt.Errorf("unknown type of TypeSpec"))
 		return
 	}
+	_l("}")
 	outputPath := filepath.Join(cwd, fmt.Sprintf("%s_json.go", typeSpec.Name.Name))
 	os.WriteFile(outputPath, lines, 0644)
 }
@@ -80,13 +85,17 @@ func escapeTypeName(typeName string) string {
 	return strings.ReplaceAll(typeName, "[]", "array_")
 }
 
+func genStruct(structType *ast.StructType) {
+}
+
 func genArray(arrayType *ast.ArrayType) {
 	typeName := nodeToString(arrayType)
-	_f("func jd_%s(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	_l("  if iter.Error != nil { return }")
+	_l("  if !iter.AssertIsArray() { return }")
 	_l("  i := 0")
 	_l("  val := *out")
-	_l("  for iter.ReadArray() {")
+	_l("  more := iter.ReadArrayHead()")
+	_l("  for more {")
 	readElement := ""
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
@@ -100,7 +109,7 @@ func genArray(arrayType *ast.ArrayType) {
 		reportError(fmt.Errorf("unknown element type of Array"))
 		return
 	}
-	_l(`    if iter.AssertIsString() && !iter.ReadNull() {`)
+	_l(`    if iter.AssertIsString() {`)
 	_l(`      if i == len(val) {`)
 	_f(`        val = append(val, %s)`, readElement)
 	_l(`      } else {`)
@@ -113,13 +122,13 @@ func genArray(arrayType *ast.ArrayType) {
 	_l(`      }`)
 	_l(`    }`)
 	_l(`    i++`)
+	_l(`    more = iter.ReadArrayMore()`)
 	_l("  }")
 	_l("  if i == 0 {")
 	_f("    *out = %s{}", typeName)
 	_l("  } else {")
 	_l("    *out = val[:i]")
 	_l("  }")
-	_l("}")
 }
 
 func locateTypeSpec() *ast.TypeSpec {

@@ -23,9 +23,10 @@ func Test_bad_strings(t *testing.T) {
 	}
 	for _, input := range badInputs {
 		iter := jsoniter.ParseBytes([]byte(input))
+		iter.AssertIsString()
 		iter.ReadString()
 		if iter.Error == nil {
-			panic("expect ReadString reports error")
+			t.Fatal("expect ReadString reports error")
 		}
 	}
 }
@@ -60,6 +61,7 @@ func Test_good_strings(t *testing.T) {
 
 	for _, tc := range goodInputs {
 		iter := jsoniter.ParseBytes([]byte(tc.input))
+		iter.AssertIsString()
 		actual := iter.ReadString()
 		if iter.Error != nil {
 			panic(fmt.Sprintf("expect ReadString not to reports error: %s", tc.input))

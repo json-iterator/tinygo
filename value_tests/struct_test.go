@@ -1,12 +1,15 @@
-package main
+package value_tests
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 )
 
-type StructOfString struct {
-	Name string
-}
-
 func Test_empty_struct(t *testing.T) {
+	bytes, _ := json.Marshal(&StructOfStringInt{
+		Name:  "hello",
+		Price: 100,
+	})
+	fmt.Println(string(bytes))
 }

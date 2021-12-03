@@ -1,13 +1,15 @@
-package main
+package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
 
-func jd_array_string(iter *jsoniter.Iterator, out *[]string) {
+func jd_ArrayOfString(iter *jsoniter.Iterator, out *ArrayOfString) {
   if iter.Error != nil { return }
+  if !iter.AssertIsArray() { return }
   i := 0
   val := *out
-  for iter.ReadArray() {
-    if iter.AssertIsString() && !iter.ReadNull() {
+  more := iter.ReadArrayHead()
+  for more {
+    if iter.AssertIsString() {
       if i == len(val) {
         val = append(val, iter.ReadString())
       } else {
@@ -20,6 +22,7 @@ func jd_array_string(iter *jsoniter.Iterator, out *[]string) {
       }
     }
     i++
+    more = iter.ReadArrayMore()
   }
   if i == 0 {
     *out = []string{}
