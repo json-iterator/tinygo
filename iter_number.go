@@ -1,7 +1,9 @@
 package jsoniter
 
 import (
+	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 )
 
@@ -17,6 +19,103 @@ func init() {
 	for i := int8('0'); i <= int8('9'); i++ {
 		intDigits[i] = i - int8('0')
 	}
+}
+
+// AssertIsNumber tell if the value is number, otherwise report error and skip
+func (iter *Iterator) AssertIsNumber() bool {
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		iter.ReportError("AssertIsNumber", "unexpected string")
+		iter.skipString()
+	case 'n':
+		// null is not considered as number, but not a error
+		iter.skipThreeBytes('u', 'l', 'l')
+	case 't':
+		iter.ReportError("AssertIsNumber", "unexpected boolean")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+	case 'f':
+		iter.ReportError("AssertIsNumber", "unexpected boolean")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		iter.unreadByte()
+		return true
+	case '[':
+		iter.ReportError("AssertIsNumber", "unexpected array")
+		iter.skipArray()
+	case '{':
+		iter.ReportError("AssertIsNumber", "unexpected object")
+		iter.skipObject()
+	default:
+		iter.ReportError("AssertIsNumber", fmt.Sprintf("unknown data: %v", c))
+	}
+	return false
+}
+
+func (iter *Iterator) readNumberAsString() (ret string) {
+	for i := iter.head; i < len(iter.buf); i++ {
+		switch iter.buf[i] {
+		case '+', '-', '.', 'e', 'E', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			continue
+		default:
+			str := string(iter.buf[iter.head:i])
+			iter.head = i
+			return str
+		}
+	}
+	str := string(iter.buf[iter.head:])
+	iter.head = len(iter.buf)
+	return str
+}
+
+// ReadBigFloat read big.Float
+func (iter *Iterator) ReadBigFloat() (ret *big.Float) {
+	str := iter.readNumberAsString()
+	prec := 64
+	if len(str) > prec {
+		prec = len(str)
+	}
+	val, _, err := big.ParseFloat(str, 10, uint(prec), big.ToZero)
+	if err != nil {
+		iter.reportError(err)
+		return nil
+	}
+	return val
+}
+
+// ReadBigInt read big.Int
+func (iter *Iterator) ReadBigInt() (ret *big.Int) {
+	str := iter.readNumberAsString()
+	ret = big.NewInt(0)
+	var success bool
+	ret, success = ret.SetString(str, 10)
+	if !success {
+		iter.ReportError("ReadBigInt", "invalid big int")
+		return nil
+	}
+	return ret
+}
+
+//ReadFloat32 read float32
+func (iter *Iterator) ReadFloat32() (ret float32) {
+	str := iter.readNumberAsString()
+	val, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		iter.reportError(err)
+		return
+	}
+	return float32(val)
+}
+
+// ReadFloat64 read float64
+func (iter *Iterator) ReadFloat64() (ret float64) {
+	str := iter.readNumberAsString()
+	val, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		iter.reportError(err)
+		return
+	}
+	return val
 }
 
 // ReadUint read uint

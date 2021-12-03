@@ -1,4 +1,4 @@
-package main
+package iter_tests
 
 import (
 	"fmt"

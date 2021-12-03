@@ -2,119 +2,59 @@ package jsoniter
 
 import (
 	"fmt"
-	"strings"
 )
 
-// ReadObject read one field from object.
-// If object ended, returns empty string.
-// Otherwise, returns the field name.
-func (iter *Iterator) ReadObject() (ret string) {
+// call in this sequence AssertIsObject => ReadObjectHead => ReadObjectMore
+
+// AssertIsObject must be called before ReadObjectHead, if the value is not array will be skipped
+func (iter *Iterator) AssertIsObject() bool {
 	c := iter.nextToken()
 	switch c {
 	case '{':
-		c = iter.nextToken()
-		if c == '"' {
-			iter.unreadByte()
-			field := iter.ReadString()
-			c = iter.nextToken()
-			if c != ':' {
-				iter.ReportError("ReadObject", "expect : after object field, but found "+string([]byte{c}))
-			}
-			return field
-		}
-		if c == '}' {
-			return "" // end of object
-		}
-		iter.ReportError("ReadObject", `expect " after {, but found `+string([]byte{c}))
-		return
-	case ',':
-		field := iter.ReadString()
-		c = iter.nextToken()
-		if c != ':' {
-			iter.ReportError("ReadObject", "expect : after object field, but found "+string([]byte{c}))
-		}
-		return field
-	case '}':
-		return "" // end of object
-	default:
-		iter.ReportError("ReadObject", fmt.Sprintf(`expect { or , or } or n, but found %s`, string([]byte{c})))
-		return
-	}
-}
-
-// CaseInsensitive
-func (iter *Iterator) readFieldHash() int64 {
-	hash := int64(0x811c9dc5)
-	c := iter.nextToken()
-	if c != '"' {
-		iter.ReportError("readFieldHash", `expect ", but found `+string([]byte{c}))
-		return 0
-	}
-	for {
-		for i := iter.head; i < len(iter.buf); i++ {
-			// require ascii string and no escape
-			b := iter.buf[i]
-			if b == '\\' {
-				iter.head = i
-				for _, b := range iter.ReadString() {
-					if 'A' <= b && b <= 'Z' {
-						b += 'a' - 'A'
-					}
-					hash ^= int64(b)
-					hash *= 0x1000193
-				}
-				c = iter.nextToken()
-				if c != ':' {
-					iter.ReportError("readFieldHash", `expect :, but found `+string([]byte{c}))
-					return 0
-				}
-				return hash
-			}
-			if b == '"' {
-				iter.head = i + 1
-				c = iter.nextToken()
-				if c != ':' {
-					iter.ReportError("readFieldHash", `expect :, but found `+string([]byte{c}))
-					return 0
-				}
-				return hash
-			}
-			if 'A' <= b && b <= 'Z' {
-				b += 'a' - 'A'
-			}
-			hash ^= int64(b)
-			hash *= 0x1000193
-		}
-		iter.ReportError("readFieldHash", `incomplete field name`)
-		return 0
-	}
-}
-
-func calcHash(str string, caseSensitive bool) int64 {
-	if !caseSensitive {
-		str = strings.ToLower(str)
-	}
-	hash := int64(0x811c9dc5)
-	for _, b := range []byte(str) {
-		hash ^= int64(b)
-		hash *= 0x1000193
-	}
-	return int64(hash)
-}
-
-func (iter *Iterator) readObjectStart() bool {
-	c := iter.nextToken()
-	if c == '{' {
-		c = iter.nextToken()
-		if c == '}' {
-			return false
-		}
-		iter.unreadByte()
 		return true
-	} else if c == 'n' {
-		iter.skipThreeBytes('u', 'l', 'l')
+	case '"':
+		iter.ReportError("AssertIsObject", "unexpected string")
+	case 'n':
+		// null is not considered as object, but not a error
+		iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		iter.ReportError("AssertIsObject", "unexpected boolean")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+	case 'f':
+		iter.ReportError("AssertIsObject", "unexpected boolean")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		iter.ReportError("AssertIsObject", "unexpected number")
+		iter.skipNumber()
+	case '[':
+		iter.ReportError("AssertIsObject", "unexpected object")
+		iter.skipObject()
+	default:
+		iter.ReportError("AssertIsObject", fmt.Sprintf("unknown data: %v", c))
+	}
+	return false
+}
+
+// ReadObjectHead tells if there is object field to read
+func (iter *Iterator) ReadObjectHead() bool {
+	c := iter.nextToken()
+	if c == '}' {
 		return false
 	}
-	iter.ReportError("readObjectStart", "expect { or n, but found "+string([]byte{c}))
-	return false
+	iter.unreadByte()
+	return true
+}
+
+// ReadObjectMore tells if there is more field to read
+func (iter *Iterator) ReadObjectMore() bool {
+	c := iter.nextToken()
+	switch c {
+	case ',':
+		return true
+	case '}':
+		return false
+	default:
+		iter.ReportError("ReadObjectMore", "expect , or }, but found "+string([]byte{c}))
+		return false
+	}
 }
