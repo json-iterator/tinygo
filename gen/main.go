@@ -37,7 +37,7 @@ func main() {
 	_f("func jd_%s(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
-		genArray(x)
+		genArray(typeName, x)
 	case *ast.StructType:
 		genStruct(x)
 	default:
@@ -86,41 +86,46 @@ func escapeTypeName(typeName string) string {
 }
 
 func genStruct(structType *ast.StructType) {
+	_l("  if iter.Error != nil { return }")
+	_l("  more := iter.ReadObjectHead()")
+	_l("  for more {")
+	_l("    field := iter.ReadObjectField()")
+	_l("    switch {")
+	for _, field := range structType.Fields.List {
+		fieldName := field.Names[0].Name
+		ptr := fmt.Sprintf("&(*out).%s", fieldName)
+		_f("    case field == `%s`:", fieldName)
+		switch x := field.Type.(type) {
+		case *ast.Ident:
+			_f("      "+getTypeDecoder(x.Name), ptr)
+		default:
+			reportError(fmt.Errorf("unknown field type of struct"))
+			return
+		}
+	}
+	_l("    default:")
+	_l("      iter.Skip()")
+	_l("    }")
+	_l("    more = iter.ReadObjectMore()")
+	_l("  }")
 }
 
-func genArray(arrayType *ast.ArrayType) {
-	typeName := nodeToString(arrayType)
+func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l("  if iter.Error != nil { return }")
-	_l("  if !iter.AssertIsArray() { return }")
 	_l("  i := 0")
 	_l("  val := *out")
 	_l("  more := iter.ReadArrayHead()")
 	_l("  for more {")
-	readElement := ""
+	_l(`    if i == len(val) {`)
+	_f(`      val = append(val, make(%s, 4)...)`, typeName)
+	_l(`    }`)
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
-		if x.Name == "string" {
-			readElement = "iter.ReadString()"
-		} else {
-			reportError(fmt.Errorf("unknown element type of Array: %s", x.Name))
-			return
-		}
+		_f("    "+getTypeDecoder(x.Name), "&val[i]")
 	default:
-		reportError(fmt.Errorf("unknown element type of Array"))
+		reportError(fmt.Errorf("unknown element type of array"))
 		return
 	}
-	_l(`    if iter.AssertIsString() {`)
-	_l(`      if i == len(val) {`)
-	_f(`        val = append(val, %s)`, readElement)
-	_l(`      } else {`)
-	_f(`        val[i] = %s`, readElement)
-	_l(`      }`)
-	_l(`    } else if i == len(val) {`)
-	_l(`      if i == len(val) {`)
-	_f(`        var empty %s`, nodeToString(arrayType.Elt))
-	_l(`        val = append(val, empty)`)
-	_l(`      }`)
-	_l(`    }`)
 	_l(`    i++`)
 	_l(`    more = iter.ReadArrayMore()`)
 	_l("  }")
@@ -129,6 +134,18 @@ func genArray(arrayType *ast.ArrayType) {
 	_l("  } else {")
 	_l("    *out = val[:i]")
 	_l("  }")
+}
+
+func getTypeDecoder(typeName string) string {
+	switch {
+	case typeName == "string":
+		return "iter.ReadString(%s)"
+	case typeName == "int":
+		return "iter.ReadInt(%s)"
+	default:
+		reportError(fmt.Errorf("unknown type: %s", typeName))
+		return ""
+	}
 }
 
 func locateTypeSpec() *ast.TypeSpec {
