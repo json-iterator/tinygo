@@ -34,7 +34,7 @@ func main() {
 	_n()
 	typeSpec := locateTypeSpec()
 	typeName := typeSpec.Name.Name
-	_f("func jd_%s(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
+	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
 		genArray(typeName, x)
@@ -97,7 +97,7 @@ func genStruct(structType *ast.StructType) {
 		_f("    case field == `%s`:", fieldName)
 		switch x := field.Type.(type) {
 		case *ast.Ident:
-			_f("      "+getTypeDecoder(x.Name), ptr)
+			_f("      "+getDecoder(x.Name), ptr)
 		default:
 			reportError(fmt.Errorf("unknown field type of struct"))
 			return
@@ -121,7 +121,7 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l(`    }`)
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
-		_f("    "+getTypeDecoder(x.Name), "&val[i]")
+		_f("    "+getDecoder(x.Name), "&val[i]")
 	default:
 		reportError(fmt.Errorf("unknown element type of array"))
 		return
@@ -136,7 +136,7 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l("  }")
 }
 
-func getTypeDecoder(typeName string) string {
+func getDecoder(typeName string) string {
 	switch {
 	case typeName == "string":
 		return "iter.ReadString(%s)"

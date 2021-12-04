@@ -7,11 +7,11 @@ import (
 	jsoniter "github.com/json-iterator/tinygo"
 )
 
-func Test_empty_struct(t *testing.T) {
+func Test_named_struct(t *testing.T) {
 	input := `{"Name":"hello","Price":100}`
 	iter := jsoniter.ParseBytes([]byte(input))
-	var val1 StructOfStringInt
-	jd_StructOfStringInt(iter, &val1)
+	var val1 NamedStruct
+	NamedStruct_json_unmarshal(iter, &val1)
 	if iter.Error != nil {
 		t.Fatal(iter.Error)
 	}
@@ -19,7 +19,7 @@ func Test_empty_struct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var val2 StructOfStringInt
+	var val2 NamedStruct
 	err = json.Unmarshal([]byte(input), &val2)
 	if err != nil {
 		t.Fatal(err)
