@@ -17,3 +17,12 @@ func NamedStruct_json_unmarshal(iter *jsoniter.Iterator, out *NamedStruct) {
     more = iter.ReadObjectMore()
   }
 }
+type NamedStruct_json struct {
+}
+func (json NamedStruct_json) Type() interface{} {
+  var val NamedStruct
+  return &val
+}
+func (json NamedStruct_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
+  NamedStruct_json_unmarshal(iter, val.(*NamedStruct))
+}

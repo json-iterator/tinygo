@@ -33,3 +33,12 @@ array1_json_unmarshal := func (iter *jsoniter.Iterator, out *[]string) {
     more = iter.ReadObjectMore()
   }
 }
+type AnonymousArray_json struct {
+}
+func (json AnonymousArray_json) Type() interface{} {
+  var val AnonymousArray
+  return &val
+}
+func (json AnonymousArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
+  AnonymousArray_json_unmarshal(iter, val.(*AnonymousArray))
+}

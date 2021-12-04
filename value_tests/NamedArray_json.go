@@ -20,3 +20,12 @@ func NamedArray_json_unmarshal(iter *jsoniter.Iterator, out *NamedArray) {
     *out = val[:i]
   }
 }
+type NamedArray_json struct {
+}
+func (json NamedArray_json) Type() interface{} {
+  var val NamedArray
+  return &val
+}
+func (json NamedArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
+  NamedArray_json_unmarshal(iter, val.(*NamedArray))
+}

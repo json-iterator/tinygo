@@ -52,6 +52,15 @@ func main() {
 	lines = append(lines, anonymousDecoders...)
 	lines = append(lines, mainDecoder...)
 	_l("}")
+	_f("type %s_json struct {", typeName)
+	_l("}")
+	_f("func (json %s_json) Type() interface{} {", typeName)
+	_f("  var val %s", typeName)
+	_l("  return &val")
+	_l("}")
+	_f("func (json %s_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {", typeName)
+	_f("  %s_json_unmarshal(iter, val.(*%s))", typeName, typeName)
+	_l("}")
 	outputPath := filepath.Join(cwd, fmt.Sprintf("%s_json.go", typeSpec.Name.Name))
 	os.WriteFile(outputPath, lines, 0644)
 }
@@ -163,8 +172,7 @@ func getDecoder(typeName string) string {
 	case typeName == "int":
 		return "iter.ReadInt(%s)"
 	default:
-		reportError(fmt.Errorf("unknown type: %s", typeName))
-		return ""
+		return typeName + "_json_unmarshal(iter, %s)"
 	}
 }
 
