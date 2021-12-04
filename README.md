@@ -1,4 +1,4 @@
-# tinygo
+# make `json.Unmarshal` work in tinygo
 
 make `json.Unmarshal` work in tinygo with minimal code size.
 
