@@ -167,10 +167,34 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 
 func getDecoder(typeName string) string {
 	switch {
+	case typeName == "bool":
+		return "iter.ReadBool(%s)"
 	case typeName == "string":
 		return "iter.ReadString(%s)"
 	case typeName == "int":
 		return "iter.ReadInt(%s)"
+	case typeName == "uint":
+		return "iter.ReadUint(%s)"
+	case typeName == "int64":
+		return "iter.ReadInt64(%s)"
+	case typeName == "uint64":
+		return "iter.ReadUint64(%s)"
+	case typeName == "int32":
+		return "iter.ReadInt32(%s)"
+	case typeName == "uint32":
+		return "iter.ReadUint32(%s)"
+	case typeName == "int16":
+		return "iter.ReadInt16(%s)"
+	case typeName == "uint16":
+		return "iter.ReadUint16(%s)"
+	case typeName == "int8":
+		return "iter.ReadInt8(%s)"
+	case typeName == "uint8":
+		return "iter.ReadUint8(%s)"
+	case typeName == "float64":
+		return "iter.ReadFloat64(%s)"
+	case typeName == "float32":
+		return "iter.ReadFloat32(%s)"
 	default:
 		return typeName + "_json_unmarshal(iter, %s)"
 	}
