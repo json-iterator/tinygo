@@ -100,32 +100,6 @@ func escapeTypeName(typeName string) string {
 	return strings.ReplaceAll(typeName, "[]", "array_")
 }
 
-func genStruct(structType *ast.StructType) {
-	_l("  more := iter.ReadObjectHead()")
-	_l("  for more {")
-	_l("    field := iter.ReadObjectField()")
-	_l("    switch {")
-	for _, field := range structType.Fields.List {
-		fieldName := field.Names[0].Name
-		ptr := fmt.Sprintf("&(*out).%s", fieldName)
-		_f("    case field == `%s`:", fieldName)
-		switch x := field.Type.(type) {
-		case *ast.Ident:
-			_f("      "+getDecoder(x.Name), ptr)
-		case *ast.ArrayType:
-			_f("      "+genAnonymousArray(x), ptr)
-		default:
-			reportError(fmt.Errorf("unknown field type of struct: %s", reflect.ValueOf(field.Type).Type()))
-			return
-		}
-	}
-	_l("    default:")
-	_l("      iter.Skip()")
-	_l("    }")
-	_l("    more = iter.ReadObjectMore()")
-	_l("  }")
-}
-
 func genAnonymousArray(arrayType *ast.ArrayType) string {
 	decoderName := fmt.Sprintf(`array%d`, anonymousCounter)
 	typeName := nodeToString(arrayType)
@@ -140,6 +114,48 @@ func genAnonymousArray(arrayType *ast.ArrayType) string {
 	return decoderName + "_json_unmarshal(iter, %s)"
 }
 
+func genAnonymousStruct(structType *ast.StructType) string {
+	decoderName := fmt.Sprintf(`struct%d`, anonymousCounter)
+	typeName := nodeToString(structType)
+	anonymousCounter++
+	oldLines := lines
+	lines = []byte{}
+	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	genStruct(structType)
+	_l("}")
+	anonymousDecoders = append(anonymousDecoders, lines...)
+	lines = oldLines
+	return decoderName + "_json_unmarshal(iter, %s)"
+}
+
+func genStruct(structType *ast.StructType) {
+	_l("  more := iter.ReadObjectHead()")
+	_l("  for more {")
+	_l("    field := iter.ReadObjectField()")
+	_l("    switch {")
+	for _, field := range structType.Fields.List {
+		fieldName := field.Names[0].Name
+		ptr := fmt.Sprintf("&(*out).%s", fieldName)
+		_f("    case field == `%s`:", fieldName)
+		switch x := field.Type.(type) {
+		case *ast.Ident:
+			_f("      "+getDecoder(x.Name), ptr)
+		case *ast.ArrayType:
+			_f("      "+genAnonymousArray(x), ptr)
+		case *ast.StructType:
+			_f("      "+genAnonymousStruct(x), ptr)
+		default:
+			reportError(fmt.Errorf("unknown field type of struct: %s", reflect.ValueOf(field.Type).Type()))
+			return
+		}
+	}
+	_l("    default:")
+	_l("      iter.Skip()")
+	_l("    }")
+	_l("    more = iter.ReadObjectMore()")
+	_l("  }")
+}
+
 func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l("  i := 0")
 	_l("  val := *out")
@@ -148,9 +164,14 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l(`    if i == len(val) {`)
 	_f(`      val = append(val, make(%s, 4)...)`, typeName)
 	_l(`    }`)
+	ptr := "&val[i]"
 	switch x := arrayType.Elt.(type) {
 	case *ast.Ident:
-		_f("    "+getDecoder(x.Name), "&val[i]")
+		_f("    "+getDecoder(x.Name), ptr)
+	case *ast.ArrayType:
+		_f("      "+genAnonymousArray(x), ptr)
+	case *ast.StructType:
+		_f("      "+genAnonymousStruct(x), ptr)
 	default:
 		reportError(fmt.Errorf("unknown element type of array"))
 		return

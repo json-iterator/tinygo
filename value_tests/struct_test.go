@@ -1,34 +1,19 @@
 package value_tests
 
 import (
-	"encoding/json"
 	"testing"
 
 	jsoniter "github.com/json-iterator/tinygo"
 )
 
-func Test_named_struct(t *testing.T) {
-	input := `{"Name":"hello","Price":100}`
-	iter := jsoniter.ParseBytes([]byte(input))
+func Test_struct1(t *testing.T) {
 	var val1 NamedStruct
-	NamedStruct_json_unmarshal(iter, &val1)
-	if iter.Error != nil {
-		t.Fatal(iter.Error)
-	}
-	bytes1, err := json.Marshal(val1)
-	if err != nil {
-		t.Fatal(err)
-	}
 	var val2 NamedStruct
-	err = json.Unmarshal([]byte(input), &val2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	bytes2, err := json.Marshal(val2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(bytes1) != string(bytes2) {
-		t.Fatal()
-	}
+	compareWithStdlib(`{"Name":"hello","Price":100}`, jsoniter.CreateJsonAdapter(NamedStruct_json{}), &val1, &val2)
+}
+
+func Test_struct2(t *testing.T) {
+	var val1 AnonymousStruct
+	var val2 AnonymousStruct
+	compareWithStdlib(`{ "Value": {"Name":"hello","Price":100} }`, jsoniter.CreateJsonAdapter(AnonymousStruct_json{}), &val1, &val2)
 }
