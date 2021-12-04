@@ -13,9 +13,8 @@ func (iter *Iterator) ReadString(out *string) error {
 			iter.skipThreeBytes('u', 'l', 'l') // null
 			return nil
 		}
-		err := iter.ReportError("ReadString", `missing "`)
-		iter.unreadByte()
-		iter.Skip()
+		err := iter.ReportError("ReadString", `expects ", but found `+string([]byte{c}))
+		iter.skip(c)
 		return err
 	}
 	for i := iter.head; i < len(iter.buf); i++ {

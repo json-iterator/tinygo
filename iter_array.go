@@ -9,8 +9,7 @@ func (iter *Iterator) ReadArrayHead() bool {
 			return false
 		}
 		iter.ReportError("ReadArrayHead", "expect [, but found "+string([]byte{c}))
-		iter.unreadByte()
-		iter.Skip()
+		iter.skip(c)
 		return false
 	}
 	c = iter.nextToken()

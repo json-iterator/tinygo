@@ -2,73 +2,72 @@ package jsoniter
 
 import "fmt"
 
-func (iter *Iterator) skipNumber() {
+func (iter *Iterator) skipNumber() error {
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		switch c {
 		case ' ', '\n', '\r', '\t', ',', '}', ']':
 			iter.head = i
-			return
+			return nil
 		}
 	}
 	iter.head = len(iter.buf)
+	return nil
 }
 
-func (iter *Iterator) skipArray() {
+func (iter *Iterator) skipArray() error {
 	level := 1
-	for {
-		for i := iter.head; i < len(iter.buf); i++ {
-			switch iter.buf[i] {
-			case '"': // If inside string, skip it
+	for i := iter.head; i < len(iter.buf); i++ {
+		switch iter.buf[i] {
+		case '"': // If inside string, skip it
+			iter.head = i + 1
+			iter.skipString()
+			i = iter.head - 1 // it will be i++ soon
+		case '[': // If open symbol, increase level
+			level++
+		case ']': // If close symbol, increase level
+			level--
+			// If we have returned to the original level, we're done
+			if level == 0 {
 				iter.head = i + 1
-				iter.skipString()
-				i = iter.head - 1 // it will be i++ soon
-			case '[': // If open symbol, increase level
-				level++
-			case ']': // If close symbol, increase level
-				level--
-				// If we have returned to the original level, we're done
-				if level == 0 {
-					iter.head = i + 1
-					return
-				}
+				return nil
 			}
 		}
 	}
+	return iter.ReportError("skipArray", "balanced bracket")
 }
 
-func (iter *Iterator) skipObject() {
+func (iter *Iterator) skipObject() error {
 	level := 1
-	for {
-		for i := iter.head; i < len(iter.buf); i++ {
-			switch iter.buf[i] {
-			case '"': // If inside string, skip it
+	for i := iter.head; i < len(iter.buf); i++ {
+		switch iter.buf[i] {
+		case '"': // If inside string, skip it
+			iter.head = i + 1
+			iter.skipString()
+			i = iter.head - 1 // it will be i++ soon
+		case '{': // If open symbol, increase level
+			level++
+		case '}': // If close symbol, increase level
+			level--
+			// If we have returned to the original level, we're done
+			if level == 0 {
 				iter.head = i + 1
-				iter.skipString()
-				i = iter.head - 1 // it will be i++ soon
-			case '{': // If open symbol, increase level
-				level++
-			case '}': // If close symbol, increase level
-				level--
-				// If we have returned to the original level, we're done
-				if level == 0 {
-					iter.head = i + 1
-					return
-				}
+				return nil
 			}
 		}
 	}
+	return iter.ReportError("skipObject", "balanced brace")
 }
 
 // adapted from: https://github.com/buger/jsonparser/blob/master/parser.go
-func (iter *Iterator) skipString() {
+func (iter *Iterator) skipString() error {
 	escaped := false
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		if c == '"' {
 			if !escaped {
 				iter.head = i + 1
-				return
+				return nil
 			}
 			j := i - 1
 			for {
@@ -76,7 +75,7 @@ func (iter *Iterator) skipString() {
 					// even number of backslashes
 					// either end of buffer, or " found
 					iter.head = i + 1
-					return
+					return nil
 				}
 				j--
 				if j < iter.head || iter.buf[j] != '\\' {
@@ -90,31 +89,33 @@ func (iter *Iterator) skipString() {
 			escaped = true
 		}
 	}
-	iter.ReportError("skipString", "incomplete string")
 	iter.head = len(iter.buf)
+	return iter.ReportError("skipString", "incomplete string")
 }
 
 // Skip skips a json object and positions to relatively the next json object
-func (iter *Iterator) Skip() {
-	c := iter.readByte()
+func (iter *Iterator) Skip() error {
+	return iter.skip(iter.nextToken())
+}
+
+func (iter *Iterator) skip(c byte) error {
 	switch c {
 	case '"':
-		iter.skipString()
+		return iter.skipString()
 	case 'n':
-		iter.skipThreeBytes('u', 'l', 'l') // null
+		return iter.skipThreeBytes('u', 'l', 'l') // null
 	case 't':
-		iter.skipThreeBytes('r', 'u', 'e') // true
+		return iter.skipThreeBytes('r', 'u', 'e') // true
 	case 'f':
-		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return iter.skipFourBytes('a', 'l', 's', 'e') // false
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		iter.skipNumber()
+		return iter.skipNumber()
 	case '[':
-		iter.skipArray()
+		return iter.skipArray()
 	case '{':
-		iter.skipObject()
+		return iter.skipObject()
 	default:
-		iter.ReportError("Skip", fmt.Sprintf("do not know how to skip: %v", c))
-		return
+		return iter.ReportError("Skip", fmt.Sprintf("do not know how to skip: %v", c))
 	}
 }
 

@@ -2,6 +2,7 @@ package iter_tests
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
 	"testing"
 
@@ -175,5 +176,41 @@ func Test_read_int64(t *testing.T) {
 				t.Fatal()
 			}
 		})
+	}
+}
+
+func Test_read_float_as_integer(t *testing.T) {
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadInt(new(int)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadUint(new(uint)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadInt64(new(int64)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadUint64(new(uint64)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadInt32(new(int32)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadUint32(new(uint32)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadInt16(new(int16)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadUint16(new(uint16)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadInt8(new(int8)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadUint8(new(uint8)) == nil {
+		t.Fatal()
+	}
+	if jsoniter.ParseBytes([]byte(`1.1`)).ReadBigInt(new(big.Int)) == nil {
+		t.Fatal()
 	}
 }

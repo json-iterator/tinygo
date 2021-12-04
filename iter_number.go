@@ -42,6 +42,9 @@ func (iter *Iterator) readNumberAsString() (ret string) {
 func (iter *Iterator) ReadBigFloat(out *big.Float) error {
 	str := iter.readNumberAsString()
 	if len(str) == 0 {
+		if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+			return iter.skipFourBytes('n', 'u', 'l', 'l') // null
+		}
 		err := iter.ReportError("ReadBigFloat", "number not found")
 		iter.Skip()
 		return err
@@ -57,7 +60,10 @@ func (iter *Iterator) ReadBigFloat(out *big.Float) error {
 func (iter *Iterator) ReadBigInt(out *big.Int) error {
 	str := iter.readNumberAsString()
 	if len(str) == 0 {
-		err := iter.ReportError("ReadBigFloat", "number not found")
+		if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+			return iter.skipFourBytes('n', 'u', 'l', 'l') // null
+		}
+		err := iter.ReportError("ReadBigInt", "number not found")
 		iter.Skip()
 		return err
 	}
@@ -71,6 +77,14 @@ func (iter *Iterator) ReadBigInt(out *big.Int) error {
 //ReadFloat32 read float32
 func (iter *Iterator) ReadFloat32(out *float32) error {
 	str := iter.readNumberAsString()
+	if len(str) == 0 {
+		if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+			return iter.skipFourBytes('n', 'u', 'l', 'l') // null
+		}
+		err := iter.ReportError("ReadFloat32", "number not found")
+		iter.Skip()
+		return err
+	}
 	val, err := strconv.ParseFloat(str, 32)
 	if err != nil {
 		iter.reportError(err)
@@ -83,6 +97,14 @@ func (iter *Iterator) ReadFloat32(out *float32) error {
 // ReadFloat64 read float64
 func (iter *Iterator) ReadFloat64(out *float64) error {
 	str := iter.readNumberAsString()
+	if len(str) == 0 {
+		if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+			return iter.skipFourBytes('n', 'u', 'l', 'l') // null
+		}
+		err := iter.ReportError("ReadFloat64", "number not found")
+		iter.Skip()
+		return err
+	}
 	val, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		iter.reportError(err)
@@ -93,23 +115,35 @@ func (iter *Iterator) ReadFloat64(out *float64) error {
 }
 
 // ReadUint read uint
-func (iter *Iterator) ReadUint(out *uint) error {
+func (iter *Iterator) ReadUint(out *uint) (err error) {
 	if strconv.IntSize == 32 {
-		return iter.ReadUint32((*uint32)(unsafe.Pointer(out)))
+		err = iter.ReadUint32((*uint32)(unsafe.Pointer(out)))
+	} else {
+		err = iter.ReadUint64((*uint64)(unsafe.Pointer(out)))
 	}
-	return iter.ReadUint64((*uint64)(unsafe.Pointer(out)))
+	iter.assertInteger(&err)
+	return
 }
 
 // ReadInt read int
-func (iter *Iterator) ReadInt(out *int) error {
+func (iter *Iterator) ReadInt(out *int) (err error) {
 	if strconv.IntSize == 32 {
-		return iter.ReadInt32((*int32)(unsafe.Pointer(out)))
+		err = iter.ReadInt32((*int32)(unsafe.Pointer(out)))
+	} else {
+		err = iter.ReadInt64((*int64)(unsafe.Pointer(out)))
 	}
-	return iter.ReadInt64((*int64)(unsafe.Pointer(out)))
+	iter.assertInteger(&err)
+	return
+}
+
+func (iter *Iterator) assertInteger(err *error) {
+	if iter.head < len(iter.buf) && iter.buf[iter.head] == '.' && *err == nil {
+		*err = iter.ReportError("assertInteger", "found float instead of integer")
+	}
 }
 
 // ReadInt8 read int8
-func (iter *Iterator) ReadInt8(out *int8) error {
+func (iter *Iterator) ReadInt8(out *int8) (ret error) {
 	c := iter.nextToken()
 	if c == '-' {
 		var val uint32
@@ -121,7 +155,32 @@ func (iter *Iterator) ReadInt8(out *int8) error {
 			return iter.ReportError("ReadInt8", "overflow: "+strconv.FormatInt(int64(val), 10))
 		}
 		*out = -int8(val)
-		return nil
+		iter.assertInteger(&ret)
+		return
+	}
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadInt8", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadInt8", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadInt8", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadInt8", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadInt8", "unexpected object")
+		iter.skipObject()
+		return
 	}
 	var val uint32
 	err := iter.readUint32(&val, c)
@@ -132,13 +191,39 @@ func (iter *Iterator) ReadInt8(out *int8) error {
 		return iter.ReportError("ReadInt8", "overflow: "+strconv.FormatInt(int64(val), 10))
 	}
 	*out = int8(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadUint8 read uint8
-func (iter *Iterator) ReadUint8(out *uint8) error {
+func (iter *Iterator) ReadUint8(out *uint8) (ret error) {
 	var val uint32
-	err := iter.readUint32(&val, iter.nextToken())
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadUint8", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadUint8", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadUint8", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadUint8", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadUint8", "unexpected object")
+		iter.skipObject()
+		return
+	}
+	err := iter.readUint32(&val, c)
 	if err != nil {
 		return err
 	}
@@ -146,11 +231,12 @@ func (iter *Iterator) ReadUint8(out *uint8) error {
 		return iter.ReportError("ReadUint8", "overflow: "+strconv.FormatInt(int64(val), 10))
 	}
 	*out = uint8(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadInt16 read int16
-func (iter *Iterator) ReadInt16(out *int16) error {
+func (iter *Iterator) ReadInt16(out *int16) (ret error) {
 	c := iter.nextToken()
 	if c == '-' {
 		var val uint32
@@ -162,7 +248,32 @@ func (iter *Iterator) ReadInt16(out *int16) error {
 			return iter.ReportError("ReadInt16", "overflow: "+strconv.FormatInt(int64(val), 10))
 		}
 		*out = -int16(val)
-		return nil
+		iter.assertInteger(&ret)
+		return
+	}
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadInt16", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadInt16", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadInt16", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadInt16", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadInt16", "unexpected object")
+		iter.skipObject()
+		return
 	}
 	var val uint32
 	err := iter.readUint32(&val, c)
@@ -173,13 +284,39 @@ func (iter *Iterator) ReadInt16(out *int16) error {
 		return iter.ReportError("ReadInt16", "overflow: "+strconv.FormatInt(int64(val), 10))
 	}
 	*out = int16(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadUint16 read uint16
-func (iter *Iterator) ReadUint16(out *uint16) error {
+func (iter *Iterator) ReadUint16(out *uint16) (ret error) {
 	var val uint32
-	err := iter.readUint32(&val, iter.nextToken())
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadUint16", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadUint16", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadUint16", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadUint16", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadUint16", "unexpected object")
+		iter.skipObject()
+		return
+	}
+	err := iter.readUint32(&val, c)
 	if err != nil {
 		return err
 	}
@@ -187,11 +324,12 @@ func (iter *Iterator) ReadUint16(out *uint16) error {
 		return iter.ReportError("ReadUint16", "overflow: "+strconv.FormatInt(int64(val), 10))
 	}
 	*out = uint16(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadInt32 read int32
-func (iter *Iterator) ReadInt32(out *int32) error {
+func (iter *Iterator) ReadInt32(out *int32) (ret error) {
 	c := iter.nextToken()
 	if c == '-' {
 		var val uint32
@@ -203,7 +341,32 @@ func (iter *Iterator) ReadInt32(out *int32) error {
 			return iter.ReportError("ReadInt32", "overflow: "+strconv.FormatInt(int64(val), 10))
 		}
 		*out = -int32(val)
-		return nil
+		iter.assertInteger(&ret)
+		return
+	}
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadInt32", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadInt32", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadInt32", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadInt32", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadInt32", "unexpected object")
+		iter.skipObject()
+		return
 	}
 	var val uint32
 	err := iter.readUint32(&val, c)
@@ -214,12 +377,40 @@ func (iter *Iterator) ReadInt32(out *int32) error {
 		return iter.ReportError("ReadInt32", "overflow: "+strconv.FormatInt(int64(val), 10))
 	}
 	*out = int32(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadUint32 read uint32
-func (iter *Iterator) ReadUint32(out *uint32) error {
-	return iter.readUint32(out, iter.nextToken())
+func (iter *Iterator) ReadUint32(out *uint32) (ret error) {
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadUint32", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadUint32", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadUint32", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadUint32", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadUint32", "unexpected object")
+		iter.skipObject()
+		return
+	}
+	ret = iter.readUint32(out, c)
+	iter.assertInteger(&ret)
+	return
 }
 
 func (iter *Iterator) readUint32(out *uint32, c byte) error {
@@ -315,7 +506,7 @@ func (iter *Iterator) readUint32(out *uint32, c byte) error {
 }
 
 // ReadInt64 read int64
-func (iter *Iterator) ReadInt64(out *int64) error {
+func (iter *Iterator) ReadInt64(out *int64) (ret error) {
 	c := iter.nextToken()
 	if c == '-' {
 		var val uint64
@@ -327,7 +518,32 @@ func (iter *Iterator) ReadInt64(out *int64) error {
 			return iter.ReportError("ReadInt64", "overflow: "+strconv.FormatUint(uint64(val), 10))
 		}
 		*out = -int64(val)
-		return nil
+		iter.assertInteger(&ret)
+		return
+	}
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadInt64", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadInt64", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadInt64", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadInt64", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadInt64", "unexpected object")
+		iter.skipObject()
+		return
 	}
 	var val uint64
 	err := iter.readUint64(&val, c)
@@ -338,12 +554,40 @@ func (iter *Iterator) ReadInt64(out *int64) error {
 		return iter.ReportError("ReadInt64", "overflow: "+strconv.FormatUint(uint64(val), 10))
 	}
 	*out = int64(val)
-	return nil
+	iter.assertInteger(&ret)
+	return
 }
 
 // ReadUint64 read uint64
-func (iter *Iterator) ReadUint64(out *uint64) error {
-	return iter.readUint64(out, iter.nextToken())
+func (iter *Iterator) ReadUint64(out *uint64) (ret error) {
+	c := iter.nextToken()
+	switch c {
+	case '"':
+		ret = iter.ReportError("ReadUint64", "unexpected string")
+		iter.skipString()
+		return
+	case 'n':
+		return iter.skipThreeBytes('u', 'l', 'l') // null
+	case 't':
+		ret = iter.ReportError("ReadUint64", "unexpected true")
+		iter.skipThreeBytes('r', 'u', 'e') // true
+		return
+	case 'f':
+		ret = iter.ReportError("ReadUint64", "unexpected false")
+		iter.skipFourBytes('a', 'l', 's', 'e') // false
+		return
+	case '[':
+		ret = iter.ReportError("ReadUint64", "unexpected array")
+		iter.skipArray()
+		return
+	case '{':
+		ret = iter.ReportError("ReadUint64", "unexpected object")
+		iter.skipObject()
+		return
+	}
+	ret = iter.readUint64(out, c)
+	iter.assertInteger(&ret)
+	return
 }
 
 func (iter *Iterator) readUint64(out *uint64, c byte) error {
