@@ -65,3 +65,15 @@ func Test_array5(t *testing.T) {
 	val2 := NamedArray{"hello"}
 	compareWithStdlib(input, &val1, &val2)
 }
+
+func Test_array6(t *testing.T) {
+	iter := jsoniter.ParseBytes([]byte(`{ "Value": ["hello","world"] }`))
+	var val1 AnonymousArray
+	AnonymousArray_json_unmarshal(iter, &val1)
+	if len(val1.Value) != 2 {
+		t.Fatal()
+	}
+	if val1.Value[1] != "world" {
+		t.Fatal(val1.Value[1])
+	}
+}

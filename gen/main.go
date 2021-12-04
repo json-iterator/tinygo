@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -17,6 +18,8 @@ var fset = token.NewFileSet()
 var lines = []byte{}
 var cwd string
 var indent = 0
+var anonymousCounter = 1
+var anonymousDecoders = []byte{}
 
 func init() {
 	var err error
@@ -28,13 +31,8 @@ func init() {
 }
 
 func main() {
-	_l(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
-	_n()
-	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
-	_n()
 	typeSpec := locateTypeSpec()
 	typeName := typeSpec.Name.Name
-	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
 		genArray(typeName, x)
@@ -44,6 +42,15 @@ func main() {
 		reportError(fmt.Errorf("unknown type of TypeSpec"))
 		return
 	}
+	mainDecoder := lines
+	lines = []byte{}
+	_l(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
+	_n()
+	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
+	_n()
+	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
+	lines = append(lines, anonymousDecoders...)
+	lines = append(lines, mainDecoder...)
 	_l("}")
 	outputPath := filepath.Join(cwd, fmt.Sprintf("%s_json.go", typeSpec.Name.Name))
 	os.WriteFile(outputPath, lines, 0644)
@@ -60,7 +67,6 @@ func _l(line string) {
 	}
 	lines = append(lines, line...)
 	lines = append(lines, '\n')
-	println(line)
 }
 
 func _n() {
@@ -86,7 +92,6 @@ func escapeTypeName(typeName string) string {
 }
 
 func genStruct(structType *ast.StructType) {
-	_l("  if iter.Error != nil { return }")
 	_l("  more := iter.ReadObjectHead()")
 	_l("  for more {")
 	_l("    field := iter.ReadObjectField()")
@@ -98,8 +103,10 @@ func genStruct(structType *ast.StructType) {
 		switch x := field.Type.(type) {
 		case *ast.Ident:
 			_f("      "+getDecoder(x.Name), ptr)
+		case *ast.ArrayType:
+			_f("      "+genAnonymousArray(x), ptr)
 		default:
-			reportError(fmt.Errorf("unknown field type of struct"))
+			reportError(fmt.Errorf("unknown field type of struct: %s", reflect.ValueOf(field.Type).Type()))
 			return
 		}
 	}
@@ -110,8 +117,21 @@ func genStruct(structType *ast.StructType) {
 	_l("  }")
 }
 
+func genAnonymousArray(arrayType *ast.ArrayType) string {
+	decoderName := fmt.Sprintf(`array%d`, anonymousCounter)
+	typeName := nodeToString(arrayType)
+	anonymousCounter++
+	oldLines := lines
+	lines = []byte{}
+	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	genArray(typeName, arrayType)
+	_l("}")
+	anonymousDecoders = append(anonymousDecoders, lines...)
+	lines = oldLines
+	return decoderName + "_json_unmarshal(iter, %s)"
+}
+
 func genArray(typeName string, arrayType *ast.ArrayType) {
-	_l("  if iter.Error != nil { return }")
 	_l("  i := 0")
 	_l("  val := *out")
 	_l("  more := iter.ReadArrayHead()")

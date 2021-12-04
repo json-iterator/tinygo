@@ -3,7 +3,6 @@ package value_tests
 import jsoniter "github.com/json-iterator/tinygo"
 
 func NamedStruct_json_unmarshal(iter *jsoniter.Iterator, out *NamedStruct) {
-  if iter.Error != nil { return }
   more := iter.ReadObjectHead()
   for more {
     field := iter.ReadObjectField()

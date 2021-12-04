@@ -3,7 +3,6 @@ package value_tests
 import jsoniter "github.com/json-iterator/tinygo"
 
 func NamedArray_json_unmarshal(iter *jsoniter.Iterator, out *NamedArray) {
-  if iter.Error != nil { return }
   i := 0
   val := *out
   more := iter.ReadArrayHead()
