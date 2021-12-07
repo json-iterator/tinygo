@@ -17,6 +17,10 @@ func (iter *Iterator) ReadString(out *string) error {
 		iter.skip(c)
 		return err
 	}
+	return iter.readString(out)
+}
+
+func (iter *Iterator) readString(out *string) error {
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
 		if c == '"' {

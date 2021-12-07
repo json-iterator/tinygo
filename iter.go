@@ -4,34 +4,14 @@ import (
 	"fmt"
 )
 
-// ValueType the type for JSON element
-type ValueType int
-
 type RawMessage []byte
 
-const (
-	// InvalidValue invalid JSON element
-	InvalidValue ValueType = iota
-	// StringValue JSON element "string"
-	StringValue
-	// NumberValue JSON element 100 or 0.10
-	NumberValue
-	// NullValue JSON element null
-	NullValue
-	// BoolValue JSON element true or false
-	BoolValue
-	// ArrayValue JSON element []
-	ArrayValue
-	// ObjectValue JSON element {}
-	ObjectValue
-)
 const uint32SafeToMultiply10 = uint32(0xffffffff)/10 - 1
 const uint64SafeToMultiple10 = uint64(0xffffffffffffffff)/10 - 1
 const maxFloat64 = 1<<53 - 1
 
 var pow10 []uint64
 var hexDigits []byte
-var valueTypes []ValueType
 
 func init() {
 	pow10 = []uint64{1, 10, 100, 1000, 10000, 100000, 1000000}
@@ -48,27 +28,6 @@ func init() {
 	for i := 'A'; i <= 'F'; i++ {
 		hexDigits[i] = byte((i - 'A') + 10)
 	}
-	valueTypes = make([]ValueType, 256)
-	for i := 0; i < len(valueTypes); i++ {
-		valueTypes[i] = InvalidValue
-	}
-	valueTypes['"'] = StringValue
-	valueTypes['-'] = NumberValue
-	valueTypes['0'] = NumberValue
-	valueTypes['1'] = NumberValue
-	valueTypes['2'] = NumberValue
-	valueTypes['3'] = NumberValue
-	valueTypes['4'] = NumberValue
-	valueTypes['5'] = NumberValue
-	valueTypes['6'] = NumberValue
-	valueTypes['7'] = NumberValue
-	valueTypes['8'] = NumberValue
-	valueTypes['9'] = NumberValue
-	valueTypes['t'] = BoolValue
-	valueTypes['f'] = BoolValue
-	valueTypes['n'] = NullValue
-	valueTypes['['] = ArrayValue
-	valueTypes['{'] = ObjectValue
 }
 
 // Iterator is a io.Reader like object, with JSON specific read functions.
@@ -87,13 +46,6 @@ func ParseBytes(input []byte) *Iterator {
 	}
 }
 
-// WhatIsNext gets ValueType of relatively next json element
-func (iter *Iterator) WhatIsNext() ValueType {
-	valueType := valueTypes[iter.nextToken()]
-	iter.unreadByte()
-	return valueType
-}
-
 func (iter *Iterator) skipWhitespaces() {
 	for i := iter.head; i < len(iter.buf); i++ {
 		c := iter.buf[i]
@@ -105,18 +57,6 @@ func (iter *Iterator) skipWhitespaces() {
 		return
 	}
 	iter.head = len(iter.buf)
-}
-
-func (iter *Iterator) isObjectEnd() bool {
-	c := iter.nextToken()
-	if c == ',' {
-		return false
-	}
-	if c == '}' {
-		return true
-	}
-	iter.ReportError("isObjectEnd", "object ended prematurely, unexpected char "+string([]byte{c}))
-	return true
 }
 
 // ReportError record a error in iterator instance with current position.
