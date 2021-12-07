@@ -60,12 +60,14 @@ func (json RefNamedArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{
 We can use `NamedArray_json_unmarshal` or `RefNamedArray_json_unmarshal` directly. Or we can use `json.Unmarshal`
 
 ```go
-var val RefNamedArray
-json := jsoniter.CreateJsonAdapter(RefNamedArray_json{})
-err := json.Unmarshal([]byte(`{ "Value": ["hello","world"] }`), &val)
+var val1 RefNamedArray
+json := jsoniter.CreateJsonAdapter(RefNamedArray_json{}, NamedArray_json{}) // list all the types you need to unmarshal here
+err := json.Unmarshal([]byte(`{ "Value": ["hello","world"] }`), &val1)
 if err != nil {
     ...
 } else {
-    fmt.Println(val)
+    fmt.Println(val1)
 }
+var val2 NamedArray
+json.Unmarshal([]byte(`["hello","world"]`), &val2) // json.Unmarshal will choose the decoder based on type
 ```
