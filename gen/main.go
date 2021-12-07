@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 var fset = token.NewFileSet()
@@ -204,6 +205,10 @@ func genStruct(structType *ast.StructType) {
 	_l("    switch {")
 	for _, field := range structType.Fields.List {
 		fieldName := field.Names[0].Name
+		isNotExported := unicode.IsLower(rune(fieldName[0])) || fieldName[0] == '_'
+		if isNotExported {
+			continue
+		}
 		ptr := fmt.Sprintf("&(*out).%s", fieldName)
 		_f("    case field == `%s`:", fieldName)
 		genDecodeStmt(field.Type, ptr)
