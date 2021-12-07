@@ -5,12 +5,12 @@ import jsoniter "github.com/json-iterator/tinygo"
 func NamedMap_json_unmarshal(iter *jsoniter.Iterator, out *NamedMap) {
   more := iter.ReadObjectHead()
   if *out == nil && iter.Error == nil {
-    *out = make(NamedMap)
+    *out = make(map[string]int)
   }
   for more {
     field := iter.ReadObjectField()
-    var value string
-    iter.ReadString(&value)
+    var value int
+    iter.ReadInt(&value)
     (*out)[field] = value
     more = iter.ReadObjectMore()
   }

@@ -26,7 +26,7 @@ func compareWithStdlib(input string, json1 jsoniter.JsonAdapter, val1 interface{
 		panic("expect error, but found no error")
 	}
 	if string(bytes1) != string(bytes2) {
-		panic(fmt.Sprintf("expect ...%s..., actual ...%s...", string(bytes1), string(bytes2)))
+		panic(fmt.Sprintf("expect ...%s..., actual ...%s...", string(bytes2), string(bytes1)))
 	}
 }
 

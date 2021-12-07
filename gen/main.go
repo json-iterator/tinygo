@@ -129,10 +129,24 @@ func genAnonymousStruct(structType *ast.StructType) string {
 	return decoderName + "_json_unmarshal(iter, %s)"
 }
 
+func genAnonymousMap(mapType *ast.MapType) string {
+	decoderName := fmt.Sprintf(`map%d`, anonymousCounter)
+	typeName := nodeToString(mapType)
+	anonymousCounter++
+	oldLines := lines
+	lines = []byte{}
+	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	genMap(mapType)
+	_l("}")
+	anonymousDecoders = append(anonymousDecoders, lines...)
+	lines = oldLines
+	return decoderName + "_json_unmarshal(iter, %s)"
+}
+
 func genMap(mapType *ast.MapType) {
 	_l("  more := iter.ReadObjectHead()")
 	_l("  if *out == nil && iter.Error == nil {")
-	_l("    *out = make(NamedMap)")
+	_f("    *out = make(%s)", nodeToString(mapType))
 	_l("  }")
 	_l("  for more {")
 	_l("    field := iter.ReadObjectField()")
@@ -189,6 +203,8 @@ func genDecodeStmt(node ast.Node, ptr string) {
 		_f("    "+genAnonymousArray(x), ptr)
 	case *ast.StructType:
 		_f("    "+genAnonymousStruct(x), ptr)
+	case *ast.MapType:
+		_f("    "+genAnonymousMap(x), ptr)
 	default:
 		reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
 		return
