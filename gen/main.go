@@ -151,8 +151,48 @@ func genMap(mapType *ast.MapType) {
 	_l("  for more {")
 	_l("    field := iter.ReadObjectField()")
 	_f("    var value %s", nodeToString(mapType.Value))
+	_f("    var key %s", nodeToString(mapType.Key))
+	_l("    var err error")
+	switch x := mapType.Key.(type) {
+	case *ast.Ident:
+		keyTypeName := x.Name
+		switch keyTypeName {
+		case "string":
+			_l("    key = field")
+		case "int":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadInt(&key)")
+		case "uint":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadUint(&key)")
+		case "int64":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadInt64(&key)")
+		case "uint64":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadUint64(&key)")
+		case "int32":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadInt32(&key)")
+		case "uint32":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadUint32(&key)")
+		case "int16":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadInt16(&key)")
+		case "uint16":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadUint16(&key)")
+		case "int8":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadInt8(&key)")
+		case "uint8":
+			_l("    err = jsoniter.ParseBytes([]byte(field)).ReadUint8(&key)")
+		default:
+			reportError(fmt.Errorf("unsupported map key type: %s", nodeToString(mapType.Key)))
+			return
+		}
+	default:
+		reportError(fmt.Errorf("unsupported map key type: %s", nodeToString(mapType.Key)))
+		return
+	}
 	genDecodeStmt(mapType.Value, "&value")
-	_l("    (*out)[field] = value")
+	_l("    if err != nil {")
+	_l(`      iter.ReportError("read map key", err.Error())`)
+	_l("    } else {")
+	_l("      (*out)[key] = value")
+	_l("    }")
 	_l("    more = iter.ReadObjectMore()")
 	_l("  }")
 }

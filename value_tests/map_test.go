@@ -33,3 +33,17 @@ func Test_map4(t *testing.T) {
 	var val2 AnonymousMap
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(AnonymousMap_json{}), &val1, &val2)
 }
+
+func Test_map5(t *testing.T) {
+	input := `{"100":"world","200":"hello"}`
+	var val1 map[int]string
+	var val2 map[int]string
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(IntKeyMap_json{}), &val1, &val2)
+}
+
+func Test_map6(t *testing.T) {
+	input := `{"100":"world","abc":"hello"}`
+	var val1 map[int]string
+	var val2 map[int]string
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(IntKeyMap_json{}), &val1, &val2)
+}

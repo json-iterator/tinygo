@@ -10,8 +10,15 @@ func NamedMap_json_unmarshal(iter *jsoniter.Iterator, out *NamedMap) {
   for more {
     field := iter.ReadObjectField()
     var value int
+    var key string
+    var err error
+    key = field
     iter.ReadInt(&value)
-    (*out)[field] = value
+    if err != nil {
+      iter.ReportError("read map key", err.Error())
+    } else {
+      (*out)[key] = value
+    }
     more = iter.ReadObjectMore()
   }
 }

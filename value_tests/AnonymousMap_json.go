@@ -11,8 +11,15 @@ map1_json_unmarshal := func (iter *jsoniter.Iterator, out *map[string]string) {
   for more {
     field := iter.ReadObjectField()
     var value string
+    var key string
+    var err error
+    key = field
     iter.ReadString(&value)
-    (*out)[field] = value
+    if err != nil {
+      iter.ReportError("read map key", err.Error())
+    } else {
+      (*out)[key] = value
+    }
     more = iter.ReadObjectMore()
   }
 }
