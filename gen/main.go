@@ -225,19 +225,33 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l("  val := *out")
 	_l("  more := iter.ReadArrayHead()")
 	_l("  for more {")
-	_l(`    if i == len(val) {`)
-	_f(`      val = append(val, make(%s, 4)...)`, typeName)
-	_l(`    }`)
-	ptr := "&val[i]"
-	genDecodeStmt(arrayType.Elt, ptr)
+	if arrayType.Len == nil {
+		// slice
+		_l(`    if i == len(val) {`)
+		_f(`      val = append(val, make(%s, 4)...)`, typeName)
+		_l(`    }`)
+		ptr := "&val[i]"
+		genDecodeStmt(arrayType.Elt, ptr)
+	} else {
+		// fixed size array
+		_f(`    if i < %s {`, nodeToString(arrayType.Len))
+		ptr := "&val[i]"
+		genDecodeStmt(arrayType.Elt, ptr)
+		_l(`    } else {`)
+		_l(`      iter.Skip()`)
+		_l(`    }`)
+	}
 	_l(`    i++`)
 	_l(`    more = iter.ReadArrayMore()`)
 	_l("  }")
-	_l("  if i == 0 {")
-	_f("    *out = %s{}", typeName)
-	_l("  } else {")
-	_l("    *out = val[:i]")
-	_l("  }")
+	if arrayType.Len == nil {
+		// slice
+		_l("  if i == 0 {")
+		_f("    *out = %s{}", typeName)
+		_l("  } else {")
+		_l("    *out = val[:i]")
+		_l("  }")
+	}
 }
 
 func genDecodeStmt(node ast.Node, ptr string) {

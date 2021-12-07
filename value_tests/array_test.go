@@ -78,3 +78,24 @@ func Test_array7(t *testing.T) {
 	var val2 RefNamedArray
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(RefNamedArray_json{}), &val1, &val2)
 }
+
+func Test_array8(t *testing.T) {
+	input := `[["hello"]]`
+	var val1 NestedArray
+	var val2 NestedArray
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(NestedArray_json{}), &val1, &val2)
+}
+
+func Test_array9(t *testing.T) {
+	input := `[["a","b","c"]]`
+	var val1 NestedArray
+	var val2 NestedArray
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(NestedArray_json{}), &val1, &val2)
+}
+
+func Test_array10(t *testing.T) {
+	input := `[[]]`
+	var val1 NestedArray
+	var val2 NestedArray
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(NestedArray_json{}), &val1, &val2)
+}
