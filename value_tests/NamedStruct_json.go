@@ -8,9 +8,9 @@ func NamedStruct_json_unmarshal(iter *jsoniter.Iterator, out *NamedStruct) {
     field := iter.ReadObjectField()
     switch {
     case field == `Name`:
-      iter.ReadString(&(*out).Name)
+    iter.ReadString(&(*out).Name)
     case field == `Price`:
-      iter.ReadInt(&(*out).Price)
+    iter.ReadInt(&(*out).Price)
     default:
       iter.Skip()
     }

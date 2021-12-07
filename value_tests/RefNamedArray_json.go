@@ -8,7 +8,7 @@ func RefNamedArray_json_unmarshal(iter *jsoniter.Iterator, out *RefNamedArray) {
     field := iter.ReadObjectField()
     switch {
     case field == `Value`:
-      NamedArray_json_unmarshal(iter, &(*out).Value)
+    NamedArray_json_unmarshal(iter, &(*out).Value)
     default:
       iter.Skip()
     }

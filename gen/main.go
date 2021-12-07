@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -38,6 +37,8 @@ func main() {
 		genArray(typeName, x)
 	case *ast.StructType:
 		genStruct(x)
+	case *ast.MapType:
+		genMap(x)
 	default:
 		reportError(fmt.Errorf("unknown type of TypeSpec"))
 		return
@@ -128,6 +129,20 @@ func genAnonymousStruct(structType *ast.StructType) string {
 	return decoderName + "_json_unmarshal(iter, %s)"
 }
 
+func genMap(mapType *ast.MapType) {
+	_l("  more := iter.ReadObjectHead()")
+	_l("  if *out == nil && iter.Error == nil {")
+	_l("    *out = make(NamedMap)")
+	_l("  }")
+	_l("  for more {")
+	_l("    field := iter.ReadObjectField()")
+	_f("    var value %s", nodeToString(mapType.Value))
+	genDecodeStmt(mapType.Value, "&value")
+	_l("    (*out)[field] = value")
+	_l("    more = iter.ReadObjectMore()")
+	_l("  }")
+}
+
 func genStruct(structType *ast.StructType) {
 	_l("  more := iter.ReadObjectHead()")
 	_l("  for more {")
@@ -137,17 +152,7 @@ func genStruct(structType *ast.StructType) {
 		fieldName := field.Names[0].Name
 		ptr := fmt.Sprintf("&(*out).%s", fieldName)
 		_f("    case field == `%s`:", fieldName)
-		switch x := field.Type.(type) {
-		case *ast.Ident:
-			_f("      "+getDecoder(x.Name), ptr)
-		case *ast.ArrayType:
-			_f("      "+genAnonymousArray(x), ptr)
-		case *ast.StructType:
-			_f("      "+genAnonymousStruct(x), ptr)
-		default:
-			reportError(fmt.Errorf("unknown field type of struct: %s", reflect.ValueOf(field.Type).Type()))
-			return
-		}
+		genDecodeStmt(field.Type, ptr)
 	}
 	_l("    default:")
 	_l("      iter.Skip()")
@@ -165,17 +170,7 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_f(`      val = append(val, make(%s, 4)...)`, typeName)
 	_l(`    }`)
 	ptr := "&val[i]"
-	switch x := arrayType.Elt.(type) {
-	case *ast.Ident:
-		_f("    "+getDecoder(x.Name), ptr)
-	case *ast.ArrayType:
-		_f("      "+genAnonymousArray(x), ptr)
-	case *ast.StructType:
-		_f("      "+genAnonymousStruct(x), ptr)
-	default:
-		reportError(fmt.Errorf("unknown element type of array"))
-		return
-	}
+	genDecodeStmt(arrayType.Elt, ptr)
 	_l(`    i++`)
 	_l(`    more = iter.ReadArrayMore()`)
 	_l("  }")
@@ -184,6 +179,20 @@ func genArray(typeName string, arrayType *ast.ArrayType) {
 	_l("  } else {")
 	_l("    *out = val[:i]")
 	_l("  }")
+}
+
+func genDecodeStmt(node ast.Node, ptr string) {
+	switch x := node.(type) {
+	case *ast.Ident:
+		_f("    "+getDecoder(x.Name), ptr)
+	case *ast.ArrayType:
+		_f("    "+genAnonymousArray(x), ptr)
+	case *ast.StructType:
+		_f("    "+genAnonymousStruct(x), ptr)
+	default:
+		reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
+		return
+	}
 }
 
 func getDecoder(typeName string) string {

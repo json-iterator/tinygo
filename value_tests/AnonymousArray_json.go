@@ -26,7 +26,7 @@ array1_json_unmarshal := func (iter *jsoniter.Iterator, out *[]string) {
     field := iter.ReadObjectField()
     switch {
     case field == `Value`:
-      array1_json_unmarshal(iter, &(*out).Value)
+    array1_json_unmarshal(iter, &(*out).Value)
     default:
       iter.Skip()
     }

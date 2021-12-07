@@ -12,9 +12,9 @@ struct1_json_unmarshal := func (iter *jsoniter.Iterator, out *struct {
     field := iter.ReadObjectField()
     switch {
     case field == `Name`:
-      iter.ReadString(&(*out).Name)
+    iter.ReadString(&(*out).Name)
     case field == `Price`:
-      iter.ReadInt(&(*out).Price)
+    iter.ReadInt(&(*out).Price)
     default:
       iter.Skip()
     }
@@ -26,7 +26,7 @@ struct1_json_unmarshal := func (iter *jsoniter.Iterator, out *struct {
     field := iter.ReadObjectField()
     switch {
     case field == `Value`:
-      struct1_json_unmarshal(iter, &(*out).Value)
+    struct1_json_unmarshal(iter, &(*out).Value)
     default:
       iter.Skip()
     }
