@@ -264,6 +264,13 @@ func genDecodeStmt(node ast.Node, ptr string) {
 		_f("    "+genAnonymousStruct(x), ptr)
 	case *ast.MapType:
 		_f("    "+genAnonymousMap(x), ptr)
+	case *ast.InterfaceType:
+		if nodeToString(node) == "interface{}" {
+			_f("    iter.ReadInterface(%s)", ptr)
+		} else {
+			reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
+			return
+		}
 	default:
 		reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
 		return

@@ -93,6 +93,16 @@ func (iter *Iterator) skipString() error {
 	return iter.ReportError("skipString", "incomplete string")
 }
 
+func (iter *Iterator) ReadRawMessage(out *RawMessage) (ret error) {
+	before := iter.head
+	ret = iter.Skip()
+	if ret == nil {
+		after := iter.head
+		*out = iter.buf[before:after]
+	}
+	return
+}
+
 // Skip skips a json object and positions to relatively the next json object
 func (iter *Iterator) Skip() error {
 	return iter.skip(iter.nextToken())

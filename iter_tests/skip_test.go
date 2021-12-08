@@ -34,6 +34,15 @@ func Test_skip(t *testing.T) {
 	}
 }
 
+func Test_read_raw_message(t *testing.T) {
+	var msg jsoniter.RawMessage
+	iter := jsoniter.ParseBytes([]byte(`"hello",100`))
+	iter.ReadRawMessage(&msg)
+	if string(msg) != `"hello"` {
+		t.Fatal()
+	}
+}
+
 func Test_skip_null(t *testing.T) {
 	parseNull := func() *jsoniter.Iterator {
 		return jsoniter.ParseBytes([]byte(`null`))
