@@ -204,10 +204,12 @@ func genMap(mapType *ast.MapType) {
 }
 
 func genStruct(structType *ast.StructType) {
+	oldLines := lines
 	_l("  more := iter.ReadObjectHead()")
 	_l("  for more {")
 	_l("    field := iter.ReadObjectField()")
 	_l("    switch {")
+	isEmptyStruct := true
 	for _, field := range structType.Fields.List {
 		fieldName := field.Names[0].Name
 		encodedFieldName := fieldName
@@ -230,9 +232,14 @@ func genStruct(structType *ast.StructType) {
 		if isNotExported {
 			continue
 		}
+		isEmptyStruct = false
 		ptr := fmt.Sprintf("&(*out).%s", fieldName)
 		_f("    case field == `%s`:", encodedFieldName)
 		genDecodeStmt(field.Type, ptr)
+	}
+	if isEmptyStruct {
+		lines = oldLines
+		return
 	}
 	_l("    default:")
 	_l("      iter.Skip()")
