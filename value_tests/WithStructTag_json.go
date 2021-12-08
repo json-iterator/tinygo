@@ -6,14 +6,19 @@ func WithStructTag_json_unmarshal(iter *jsoniter.Iterator, out *WithStructTag) {
   more := iter.ReadObjectHead()
   for more {
     field := iter.ReadObjectField()
-    switch {
-    case field == `field1`:
-    iter.ReadString(&(*out).Field1)
-    default:
+    if !WithStructTag_json_unmarshal_field(iter, field, out) {
       iter.Skip()
     }
     more = iter.ReadObjectMore()
   }
+}
+func WithStructTag_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *WithStructTag) bool {
+  switch {
+  case field == `field1`:
+    iter.ReadString(&(*out).Field1)
+    return true
+  }
+  return false
 }
 type WithStructTag_json struct {
 }

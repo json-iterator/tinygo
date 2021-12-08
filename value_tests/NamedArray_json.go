@@ -20,6 +20,9 @@ func NamedArray_json_unmarshal(iter *jsoniter.Iterator, out *NamedArray) {
     *out = val[:i]
   }
 }
+func NamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NamedArray) bool {
+  return false
+}
 type NamedArray_json struct {
 }
 func (json NamedArray_json) Type() interface{} {

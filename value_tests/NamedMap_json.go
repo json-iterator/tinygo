@@ -22,6 +22,9 @@ func NamedMap_json_unmarshal(iter *jsoniter.Iterator, out *NamedMap) {
     more = iter.ReadObjectMore()
   }
 }
+func NamedMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NamedMap) bool {
+  return false
+}
 type NamedMap_json struct {
 }
 func (json NamedMap_json) Type() interface{} {

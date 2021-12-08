@@ -3,7 +3,24 @@ package value_tests
 import jsoniter "github.com/json-iterator/tinygo"
 
 func AnonymousMap_json_unmarshal(iter *jsoniter.Iterator, out *AnonymousMap) {
-map1_json_unmarshal := func (iter *jsoniter.Iterator, out *map[string]string) {
+  more := iter.ReadObjectHead()
+  for more {
+    field := iter.ReadObjectField()
+    if !AnonymousMap_json_unmarshal_field(iter, field, out) {
+      iter.Skip()
+    }
+    more = iter.ReadObjectMore()
+  }
+}
+func AnonymousMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *AnonymousMap) bool {
+  switch {
+  case field == `Value`:
+    AnonymousMap_map1_json_unmarshal(iter, &(*out).Value)
+    return true
+  }
+  return false
+}
+func AnonymousMap_map1_json_unmarshal (iter *jsoniter.Iterator, out *map[string]string) {
   more := iter.ReadObjectHead()
   if *out == nil && iter.Error == nil {
     *out = make(map[string]string)
@@ -19,18 +36,6 @@ map1_json_unmarshal := func (iter *jsoniter.Iterator, out *map[string]string) {
       iter.ReportError("read map key", err.Error())
     } else {
       (*out)[key] = value
-    }
-    more = iter.ReadObjectMore()
-  }
-}
-  more := iter.ReadObjectHead()
-  for more {
-    field := iter.ReadObjectField()
-    switch {
-    case field == `Value`:
-    map1_json_unmarshal(iter, &(*out).Value)
-    default:
-      iter.Skip()
     }
     more = iter.ReadObjectMore()
   }

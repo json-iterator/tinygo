@@ -22,6 +22,7 @@ var anonymousCounter = 1
 var anonymousDecoders = []byte{}
 var referencedImports = map[string]string{}
 var allImports = map[string]string{}
+var prefix string
 
 func init() {
 	var err error
@@ -35,11 +36,12 @@ func init() {
 func main() {
 	typeSpec := locateTypeSpec()
 	typeName := typeSpec.Name.Name
+	prefix = typeName
 	switch x := typeSpec.Type.(type) {
 	case *ast.ArrayType:
 		genArray(typeName, x)
 	case *ast.StructType:
-		genStruct(x)
+		genStruct(typeName, x)
 	case *ast.MapType:
 		genMap(x)
 	default:
@@ -48,6 +50,12 @@ func main() {
 	}
 	mainDecoder := lines
 	lines = []byte{}
+	switch x := typeSpec.Type.(type) {
+	case *ast.StructType:
+		genStructFields(x)
+	}
+	fieldsDecoder := lines
+	lines = []byte{}
 	_l(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
 	_n()
 	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
@@ -55,10 +63,14 @@ func main() {
 		_f(`import %s "%s"`, alias, path)
 	}
 	_n()
-	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
-	lines = append(lines, anonymousDecoders...)
+	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", prefix, typeName)
 	lines = append(lines, mainDecoder...)
 	_l("}")
+	_f("func %s_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *%s) bool {", prefix, typeName)
+	lines = append(lines, fieldsDecoder...)
+	_l("  return false")
+	_l("}")
+	lines = append(lines, anonymousDecoders...)
 	_f("type %s_json struct {", typeName)
 	_l("}")
 	_f("func (json %s_json) Type() interface{} {", typeName)
@@ -66,7 +78,7 @@ func main() {
 	_l("  return &val")
 	_l("}")
 	_f("func (json %s_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {", typeName)
-	_f("  %s_json_unmarshal(iter, val.(*%s))", typeName, typeName)
+	_f("  %s_json_unmarshal(iter, val.(*%s))", prefix, typeName)
 	_l("}")
 	outputPath := filepath.Join(cwd, fmt.Sprintf("%s_json.go", typeSpec.Name.Name))
 	os.WriteFile(outputPath, lines, 0644)
@@ -103,17 +115,13 @@ func nodeToString(node ast.Node) string {
 	return buf.String()
 }
 
-func escapeTypeName(typeName string) string {
-	return strings.ReplaceAll(typeName, "[]", "array_")
-}
-
 func genAnonymousArray(arrayType *ast.ArrayType) string {
-	decoderName := fmt.Sprintf(`array%d`, anonymousCounter)
+	decoderName := fmt.Sprintf(`%s_array%d`, prefix, anonymousCounter)
 	typeName := nodeToString(arrayType)
 	anonymousCounter++
 	oldLines := lines
 	lines = []byte{}
-	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
 	genArray(typeName, arrayType)
 	_l("}")
 	anonymousDecoders = append(anonymousDecoders, lines...)
@@ -122,13 +130,16 @@ func genAnonymousArray(arrayType *ast.ArrayType) string {
 }
 
 func genAnonymousStruct(structType *ast.StructType) string {
-	decoderName := fmt.Sprintf(`struct%d`, anonymousCounter)
-	typeName := nodeToString(structType)
+	decoderName := fmt.Sprintf(`%s_struct%d`, prefix, anonymousCounter)
 	anonymousCounter++
 	oldLines := lines
 	lines = []byte{}
-	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
-	genStruct(structType)
+	_f("func %s_json_unmarshal_field (iter *jsoniter.Iterator, field string, out *%s) bool {", decoderName, nodeToString(structType))
+	genStructFields(structType)
+	_l("  return false")
+	_l("}")
+	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, nodeToString(structType))
+	genStruct(decoderName, structType)
 	_l("}")
 	anonymousDecoders = append(anonymousDecoders, lines...)
 	lines = oldLines
@@ -136,12 +147,12 @@ func genAnonymousStruct(structType *ast.StructType) string {
 }
 
 func genAnonymousMap(mapType *ast.MapType) string {
-	decoderName := fmt.Sprintf(`map%d`, anonymousCounter)
+	decoderName := fmt.Sprintf(`%s_map%d`, prefix, anonymousCounter)
 	typeName := nodeToString(mapType)
 	anonymousCounter++
 	oldLines := lines
 	lines = []byte{}
-	_f("%s_json_unmarshal := func (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
 	genMap(mapType)
 	_l("}")
 	anonymousDecoders = append(anonymousDecoders, lines...)
@@ -203,14 +214,38 @@ func genMap(mapType *ast.MapType) {
 	_l("  }")
 }
 
-func genStruct(structType *ast.StructType) {
+func genStructFields(structType *ast.StructType) {
 	oldLines := lines
-	_l("  more := iter.ReadObjectHead()")
-	_l("  for more {")
-	_l("    field := iter.ReadObjectField()")
-	_l("    switch {")
 	isEmptyStruct := true
+	for i, field := range structType.Fields.List {
+		if len(field.Names) != 0 {
+			continue
+		}
+		switch x := field.Type.(type) {
+		case *ast.StarExpr:
+			if ident, ok := x.X.(*ast.Ident); ok {
+				_f("  var val%d %s", i, ident.Name)
+				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", ident.Name, i)
+				_f("    out.%s = new(%s)", ident.Name, ident.Name)
+				_f("    *out.%s = val%d", ident.Name, i)
+				_l("    return true")
+				_l("  }")
+			} else {
+				reportError(fmt.Errorf("unknown embed field type: %s", field.Type))
+				return
+			}
+		case *ast.Ident:
+			_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", x.Name, x.Name)
+		default:
+			reportError(fmt.Errorf("unknown embed field type: %s", field.Type))
+			return
+		}
+	}
+	_l("  switch {")
 	for _, field := range structType.Fields.List {
+		if len(field.Names) == 0 {
+			continue
+		}
 		fieldName := field.Names[0].Name
 		encodedFieldName := fieldName
 		if field.Tag != nil {
@@ -234,14 +269,22 @@ func genStruct(structType *ast.StructType) {
 		}
 		isEmptyStruct = false
 		ptr := fmt.Sprintf("&(*out).%s", fieldName)
-		_f("    case field == `%s`:", encodedFieldName)
+		_f("  case field == `%s`:", encodedFieldName)
 		genDecodeStmt(field.Type, ptr)
+		_l("    return true")
 	}
+	_l("  }")
 	if isEmptyStruct {
 		lines = oldLines
 		return
 	}
-	_l("    default:")
+}
+
+func genStruct(typeName string, structType *ast.StructType) {
+	_l("  more := iter.ReadObjectHead()")
+	_l("  for more {")
+	_l("    field := iter.ReadObjectField()")
+	_f("    if !%s_json_unmarshal_field(iter, field, out) {", typeName)
 	_l("      iter.Skip()")
 	_l("    }")
 	_l("    more = iter.ReadObjectMore()")

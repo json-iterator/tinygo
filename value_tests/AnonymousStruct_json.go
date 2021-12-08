@@ -3,31 +3,45 @@ package value_tests
 import jsoniter "github.com/json-iterator/tinygo"
 
 func AnonymousStruct_json_unmarshal(iter *jsoniter.Iterator, out *AnonymousStruct) {
-struct1_json_unmarshal := func (iter *jsoniter.Iterator, out *struct {
+  more := iter.ReadObjectHead()
+  for more {
+    field := iter.ReadObjectField()
+    if !AnonymousStruct_json_unmarshal_field(iter, field, out) {
+      iter.Skip()
+    }
+    more = iter.ReadObjectMore()
+  }
+}
+func AnonymousStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *AnonymousStruct) bool {
+  switch {
+  case field == `Value`:
+    AnonymousStruct_struct1_json_unmarshal(iter, &(*out).Value)
+    return true
+  }
+  return false
+}
+func AnonymousStruct_struct1_json_unmarshal_field (iter *jsoniter.Iterator, field string, out *struct {
+	Name	string
+	Price	int
+}) bool {
+  switch {
+  case field == `Name`:
+    iter.ReadString(&(*out).Name)
+    return true
+  case field == `Price`:
+    iter.ReadInt(&(*out).Price)
+    return true
+  }
+  return false
+}
+func AnonymousStruct_struct1_json_unmarshal (iter *jsoniter.Iterator, out *struct {
 	Name	string
 	Price	int
 }) {
   more := iter.ReadObjectHead()
   for more {
     field := iter.ReadObjectField()
-    switch {
-    case field == `Name`:
-    iter.ReadString(&(*out).Name)
-    case field == `Price`:
-    iter.ReadInt(&(*out).Price)
-    default:
-      iter.Skip()
-    }
-    more = iter.ReadObjectMore()
-  }
-}
-  more := iter.ReadObjectHead()
-  for more {
-    field := iter.ReadObjectField()
-    switch {
-    case field == `Value`:
-    struct1_json_unmarshal(iter, &(*out).Value)
-    default:
+    if !AnonymousStruct_struct1_json_unmarshal_field(iter, field, out) {
       iter.Skip()
     }
     more = iter.ReadObjectMore()

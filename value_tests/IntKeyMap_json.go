@@ -22,6 +22,9 @@ func IntKeyMap_json_unmarshal(iter *jsoniter.Iterator, out *IntKeyMap) {
     more = iter.ReadObjectMore()
   }
 }
+func IntKeyMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *IntKeyMap) bool {
+  return false
+}
 type IntKeyMap_json struct {
 }
 func (json IntKeyMap_json) Type() interface{} {
