@@ -210,12 +210,28 @@ func genStruct(structType *ast.StructType) {
 	_l("    switch {")
 	for _, field := range structType.Fields.List {
 		fieldName := field.Names[0].Name
+		encodedFieldName := fieldName
+		if field.Tag != nil {
+			t, _ := strconv.Unquote(field.Tag.Value)
+			tags, err := parseStructTag(t)
+			if err != nil {
+				reportError(fmt.Errorf("%s: %w", t, err))
+				return
+			}
+			jsonTag := tags["json"]
+			if jsonTag != nil && len(jsonTag) > 0 {
+				if jsonTag[0] == "-" {
+					continue
+				}
+				encodedFieldName = jsonTag[0]
+			}
+		}
 		isNotExported := unicode.IsLower(rune(fieldName[0])) || fieldName[0] == '_'
 		if isNotExported {
 			continue
 		}
 		ptr := fmt.Sprintf("&(*out).%s", fieldName)
-		_f("    case field == `%s`:", fieldName)
+		_f("    case field == `%s`:", encodedFieldName)
 		genDecodeStmt(field.Type, ptr)
 	}
 	_l("    default:")
