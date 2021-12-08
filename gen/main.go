@@ -20,6 +20,8 @@ var cwd string
 var indent = 0
 var anonymousCounter = 1
 var anonymousDecoders = []byte{}
+var referencedImports = map[string]string{}
+var allImports = map[string]string{}
 
 func init() {
 	var err error
@@ -49,6 +51,9 @@ func main() {
 	_l(fmt.Sprintf("package %s", os.Getenv("GOPACKAGE")))
 	_n()
 	_l(`import jsoniter "github.com/json-iterator/tinygo"`)
+	for alias, path := range referencedImports {
+		_f(`import %s "%s"`, alias, path)
+	}
 	_n()
 	_f("func %s_json_unmarshal(iter *jsoniter.Iterator, out *%s) {", escapeTypeName(typeName), typeName)
 	lines = append(lines, anonymousDecoders...)
@@ -275,11 +280,16 @@ func genDecodeStmt(node ast.Node, ptr string) {
 		if x.Sel.Name == "Number" {
 			_f("    iter.ReadNumber(%s)", ptr)
 		} else {
-			reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
-			return
+			alias := nodeToString(x.X)
+			if path, ok := allImports[alias]; ok {
+				referencedImports[alias] = path
+			} else {
+				reportError(fmt.Errorf("unknown import: %s", alias))
+				return
+			}
+			_f("    %s_json_unmarshal(iter, %s)", nodeToString(node), ptr)
 		}
 	default:
-		fmt.Println(node.(*ast.SelectorExpr).Sel.Name)
 		reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
 		return
 	}
@@ -330,6 +340,15 @@ func locateTypeSpec() *ast.TypeSpec {
 	if err != nil {
 		reportError(err)
 		return nil
+	}
+	for _, importSpec := range f.Imports {
+		path, _ := strconv.Unquote(importSpec.Path.Value)
+		if importSpec.Name == nil {
+			parts := strings.Split(path, "/")
+			allImports[parts[len(parts)-1]] = path
+		} else {
+			allImports[importSpec.Name.Name] = path
+		}
 	}
 	var located *ast.TypeSpec
 	ast.Inspect(f, func(n ast.Node) bool {
