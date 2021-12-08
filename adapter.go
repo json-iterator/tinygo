@@ -25,6 +25,9 @@ func CreateJsonAdapter(adapters ...TypeAdapter) JsonAdapter {
 			t := reflect.ValueOf(out).Type()
 			adapter := adapterMap[t]
 			if adapter == nil {
+				if t.Kind() != reflect.Ptr {
+					return fmt.Errorf("unmarshal expect pointer, actual type is: %s", t)
+				}
 				return fmt.Errorf("unknown type: %s", t)
 			}
 			iter := ParseBytes(bytes)
