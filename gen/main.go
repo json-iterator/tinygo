@@ -271,7 +271,15 @@ func genDecodeStmt(node ast.Node, ptr string) {
 			reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
 			return
 		}
+	case *ast.SelectorExpr:
+		if x.Sel.Name == "Number" {
+			_f("    iter.ReadNumber(%s)", ptr)
+		} else {
+			reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
+			return
+		}
 	default:
+		fmt.Println(node.(*ast.SelectorExpr).Sel.Name)
 		reportError(fmt.Errorf("unknown type: %s", nodeToString(node)))
 		return
 	}

@@ -1,6 +1,8 @@
 package value_tests
 
-import "bytes"
+import (
+	"bytes"
+)
 
 //go:generate go run github.com/json-iterator/tinygo/gen
 type NamedStruct struct {

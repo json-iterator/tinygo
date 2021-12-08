@@ -21,19 +21,33 @@ func init() {
 	}
 }
 
-func (iter *Iterator) readNumberAsString() (ret string) {
+func (iter *Iterator) ReadNumber(out *Number) error {
+	str := iter.readNumberAsString()
+	if len(str) == 0 {
+		if iter.head < len(iter.buf) && iter.buf[iter.head] == 'n' {
+			return iter.skipFourBytes('n', 'u', 'l', 'l') // null
+		}
+		err := iter.ReportError("ReadNumber", "number not found")
+		iter.Skip()
+		return err
+	}
+	*out = Number(str)
+	return nil
+}
+
+func (iter *Iterator) readNumberAsString() (ret []byte) {
 	iter.skipWhitespaces()
 	for i := iter.head; i < len(iter.buf); i++ {
 		switch iter.buf[i] {
 		case '+', '-', '.', 'e', 'E', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			continue
 		default:
-			str := string(iter.buf[iter.head:i])
+			str := iter.buf[iter.head:i]
 			iter.head = i
 			return str
 		}
 	}
-	str := string(iter.buf[iter.head:])
+	str := iter.buf[iter.head:]
 	iter.head = len(iter.buf)
 	return str
 }
@@ -49,7 +63,7 @@ func (iter *Iterator) ReadBigFloat(out *big.Float) error {
 		iter.Skip()
 		return err
 	}
-	_, success := (*out).SetString(str)
+	_, success := (*out).SetString(string(str))
 	if !success {
 		return iter.ReportError("ReadBigFloat", "invalid big float")
 	}
@@ -67,7 +81,7 @@ func (iter *Iterator) ReadBigInt(out *big.Int) error {
 		iter.Skip()
 		return err
 	}
-	_, success := (*out).SetString(str, 10)
+	_, success := (*out).SetString(string(str), 10)
 	if !success {
 		return iter.ReportError("ReadBigInt", "invalid big int")
 	}
@@ -85,7 +99,7 @@ func (iter *Iterator) ReadFloat32(out *float32) error {
 		iter.Skip()
 		return err
 	}
-	val, err := strconv.ParseFloat(str, 32)
+	val, err := strconv.ParseFloat(string(str), 32)
 	if err != nil {
 		iter.reportError(err)
 		return err
@@ -105,7 +119,7 @@ func (iter *Iterator) ReadFloat64(out *float64) error {
 		iter.Skip()
 		return err
 	}
-	val, err := strconv.ParseFloat(str, 64)
+	val, err := strconv.ParseFloat(string(str), 64)
 	if err != nil {
 		iter.reportError(err)
 		return err

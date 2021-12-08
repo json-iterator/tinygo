@@ -95,6 +95,9 @@ func Test_skip_null(t *testing.T) {
 	if parseNull().ReadBool(new(bool)) != nil {
 		t.Fatal()
 	}
+	if parseNull().ReadNumber(new(jsoniter.Number)) != nil {
+		t.Fatal()
+	}
 	iter := parseNull()
 	if iter.ReadObjectHead() != false {
 		t.Fatal()
@@ -466,6 +469,27 @@ func Test_skip_invalid_bool(t *testing.T) {
 	for _, input := range inputs {
 		iter := jsoniter.ParseBytes([]byte(input + `,100`))
 		iter.ReadBool(new(bool))
+		if iter.Error == nil {
+			t.Fatal()
+		}
+		iter.ReadArrayMore()
+		var val int
+		iter.ReadInt(&val)
+		if val != 100 {
+			t.Fatal(input)
+		}
+	}
+}
+
+func Test_skip_invalid_Number(t *testing.T) {
+	inputs := []string{
+		`"hello"`,
+		`[]`,
+		`{}`,
+	}
+	for _, input := range inputs {
+		iter := jsoniter.ParseBytes([]byte(input + `,100`))
+		iter.ReadNumber(new(jsoniter.Number))
 		if iter.Error == nil {
 			t.Fatal()
 		}
