@@ -121,6 +121,14 @@ func _f(format string, a ...interface{}) {
 }
 
 func nodeToString(node ast.Node) string {
+	if x, ok := node.(*ast.SelectorExpr); ok {
+		alias, ok := x.X.(*ast.Ident)
+		if ok {
+			if path, ok := allImports[alias.Name]; ok {
+				referencedImports[alias.Name] = path
+			}
+		}
+	}
 	buf := bytes.NewBuffer([]byte{})
 	err := printer.Fprint(buf, fset, node)
 	if err != nil {
@@ -281,26 +289,40 @@ func genStructField(structType *ast.StructType) {
 					reportError(fmt.Errorf("unknown import: %s", alias))
 					return
 				}
-				typeName := nodeToString(y)
-				_f("  var val%d %s", i, typeName)
-				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", typeName, i)
-				_f("    out.%s = new(%s)", y.Sel.Name, typeName)
-				_f("    *out.%s = val%d", y.Sel.Name, i)
-				_l("    return true")
-				_l("  }")
+				if y.Sel.Name == "Number" {
+					_l(`  if field == "Number" {`)
+					_l("    var val jsoniter.Number")
+					_l("    iter.ReadNumber(&val)")
+					_f("    out.Number = new(%s)", nodeToString(y))
+					_f("    *out.Number = %s(val)", nodeToString(y))
+					_l("    return true")
+					_l("  }")
+				} else {
+					typeName := nodeToString(y)
+					_f("  var val%d %s", i, typeName)
+					_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", typeName, i)
+					_f("    out.%s = new(%s)", y.Sel.Name, typeName)
+					_f("    *out.%s = val%d", y.Sel.Name, i)
+					_l("    return true")
+					_l("  }")
+				}
 			default:
 				reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(field.Type)))
 				return
 			}
 		case *ast.SelectorExpr:
-			alias := nodeToString(x.X)
-			if path, ok := allImports[alias]; ok {
-				referencedImports[alias] = path
+			if x.Sel.Name == "Number" {
+				_l(`  if field == "Number" { iter.ReadNumber((*jsoniter.Number)(&out.Number)); return true }`)
 			} else {
-				reportError(fmt.Errorf("unknown import: %s", alias))
-				return
+				alias := nodeToString(x.X)
+				if path, ok := allImports[alias]; ok {
+					referencedImports[alias] = path
+				} else {
+					reportError(fmt.Errorf("unknown import: %s", alias))
+					return
+				}
+				_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", nodeToString(x), x.Sel.Name)
 			}
-			_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", nodeToString(x), x.Sel.Name)
 		case *ast.Ident: // embed value
 			if x.Name == "string" ||
 				x.Name == "bool" ||
@@ -431,7 +453,7 @@ func genDecodeStmt(node ast.Node, ptr string) {
 		}
 	case *ast.SelectorExpr:
 		if x.Sel.Name == "Number" {
-			_f("    iter.ReadNumber(%s)", ptr)
+			_f("    iter.ReadNumber((*jsoniter.Number)(%s))", ptr)
 		} else {
 			alias := nodeToString(x.X)
 			if path, ok := allImports[alias]; ok {

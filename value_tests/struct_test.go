@@ -1,6 +1,7 @@
 package value_tests
 
 import (
+	"encoding/json"
 	"testing"
 
 	jsoniter "github.com/json-iterator/tinygo"
@@ -52,7 +53,7 @@ func Test_struct7(t *testing.T) {
 	if iter.Error != nil {
 		t.Fatal(iter.Error)
 	}
-	if *val1.Number != jsoniter.Number("100") {
+	if val1.Number != json.Number("100") {
 		t.Fatal(val1.Number)
 	}
 }

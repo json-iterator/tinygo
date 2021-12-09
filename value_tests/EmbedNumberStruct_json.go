@@ -13,11 +13,7 @@ func EmbedNumberStruct_json_unmarshal(iter *jsoniter.Iterator, out *EmbedNumberS
   }
 }
 func EmbedNumberStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *EmbedNumberStruct) bool {
-  if field == "Number" {
-    out.Number = new(jsoniter.Number)
-    iter.ReadNumber(out.Number)
-    return true
-  }
+  if field == "Number" { iter.ReadNumber((*jsoniter.Number)(&out.Number)); return true }
   return false
 }
 type EmbedNumberStruct_json struct {

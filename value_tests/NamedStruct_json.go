@@ -1,6 +1,7 @@
 package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
+import json "encoding/json"
 
 func NamedStruct_json_unmarshal(iter *jsoniter.Iterator, out *NamedStruct) {
   more := iter.ReadObjectHead()
@@ -18,10 +19,17 @@ func NamedStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out
     iter.ReadString(&(*out).Name)
     return true
   case field == `Price`:
-    iter.ReadInterface(&(*out).Price)
+    NamedStruct_ptr1_json_unmarshal(iter, &(*out).Price)
     return true
   }
   return false
+}
+func NamedStruct_ptr1_json_unmarshal (iter *jsoniter.Iterator, out **json.Number) {
+    var val json.Number
+    iter.ReadNumber((*jsoniter.Number)(&val))
+    if iter.Error == nil {
+      *out = &val
+    }
 }
 type NamedStruct_json struct {
 }
