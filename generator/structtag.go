@@ -1,4 +1,4 @@
-package main
+package generator
 
 // copied from https://github.com/fatih/structtag/blob/master/tags.go
 
