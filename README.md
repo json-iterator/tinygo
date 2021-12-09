@@ -30,6 +30,7 @@ import "github.com/json-iterator/tinygo"
 json := jsoniter.CreateJsonAdapter(RefNamedArray_json{}, NamedArray_json{}) 
 
 var val1 RefNamedArray
+var val2 NamedArray
 json.Unmarshal([]byte(`{ "Value": ["hello","world"] }`), &val1)
 json.Unmarshal([]byte(`["hello","world"]`), &val2) 
 ```
