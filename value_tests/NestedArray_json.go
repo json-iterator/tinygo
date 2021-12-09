@@ -21,6 +21,10 @@ func NestedArray_json_unmarshal(iter *jsoniter.Iterator, out *NestedArray) {
   }
 }
 func NestedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NestedArray) bool {
+  if field == "NestedArray" {
+    NestedArray_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 func NestedArray_array1_json_unmarshal (iter *jsoniter.Iterator, out *[2]float64) {

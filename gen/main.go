@@ -46,6 +46,8 @@ func main() {
 		genMap(x)
 	case *ast.StarExpr:
 		genPtr(x)
+	case *ast.Ident:
+		genDecodeStmt(x, fmt.Sprintf("(*%s)(out)", x.Name))
 	default:
 		reportError(fmt.Errorf("not supported type: %s", nodeToString(typeSpec)))
 		return
@@ -54,7 +56,18 @@ func main() {
 	lines = []byte{}
 	switch x := typeSpec.Type.(type) {
 	case *ast.StructType:
-		genStructFields(x)
+		genStructField(x)
+	case *ast.StarExpr:
+		genOtherField(typeName)
+	case *ast.MapType:
+		genOtherField(typeName)
+	case *ast.ArrayType:
+		genOtherField(typeName)
+	case *ast.Ident:
+		genOtherField(typeName)
+	default:
+		reportError(fmt.Errorf("not supported type: %s", nodeToString(typeSpec)))
+		return
 	}
 	fieldsDecoder := lines
 	lines = []byte{}
@@ -137,7 +150,7 @@ func genAnonymousStruct(structType *ast.StructType) string {
 	oldLines := lines
 	lines = []byte{}
 	_f("func %s_json_unmarshal_field (iter *jsoniter.Iterator, field string, out *%s) bool {", decoderName, nodeToString(structType))
-	genStructFields(structType)
+	genStructField(structType)
 	_l("  return false")
 	_l("}")
 	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, nodeToString(structType))
@@ -238,9 +251,14 @@ func genMap(mapType *ast.MapType) {
 	_l("  }")
 }
 
-func genStructFields(structType *ast.StructType) {
-	oldLines := lines
-	isEmptyStruct := true
+func genOtherField(expectedFieldName string) {
+	_f(`  if field == "%s" {`, expectedFieldName)
+	_f("    %s_json_unmarshal(iter, out)", prefix)
+	_l("    return true")
+	_l("  }")
+}
+
+func genStructField(structType *ast.StructType) {
 	for i, field := range structType.Fields.List {
 		if len(field.Names) != 0 {
 			continue
@@ -259,12 +277,30 @@ func genStructFields(structType *ast.StructType) {
 				return
 			}
 		case *ast.Ident:
+			if x.Name == "string" ||
+				x.Name == "bool" ||
+				x.Name == "int" ||
+				x.Name == "uint" ||
+				x.Name == "int64" ||
+				x.Name == "uint64" ||
+				x.Name == "int32" ||
+				x.Name == "uint32" ||
+				x.Name == "int16" ||
+				x.Name == "uint16" ||
+				x.Name == "int8" ||
+				x.Name == "uint8" ||
+				x.Name == "float64" ||
+				x.Name == "float32" {
+				continue
+			}
 			_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", x.Name, x.Name)
 		default:
 			reportError(fmt.Errorf("unknown embed field type: %s", field.Type))
 			return
 		}
 	}
+	oldLines := lines
+	isEmptyStruct := true
 	_l("  switch {")
 	for _, field := range structType.Fields.List {
 		if len(field.Names) == 0 {

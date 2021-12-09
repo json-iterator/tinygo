@@ -23,6 +23,10 @@ func IntKeyMap_json_unmarshal(iter *jsoniter.Iterator, out *IntKeyMap) {
   }
 }
 func IntKeyMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *IntKeyMap) bool {
+  if field == "IntKeyMap" {
+    IntKeyMap_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 type IntKeyMap_json struct {

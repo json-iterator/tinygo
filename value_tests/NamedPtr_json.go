@@ -10,6 +10,10 @@ func NamedPtr_json_unmarshal(iter *jsoniter.Iterator, out *NamedPtr) {
     }
 }
 func NamedPtr_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NamedPtr) bool {
+  if field == "NamedPtr" {
+    NamedPtr_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 type NamedPtr_json struct {

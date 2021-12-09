@@ -10,6 +10,10 @@ func DoublePtr_json_unmarshal(iter *jsoniter.Iterator, out *DoublePtr) {
     }
 }
 func DoublePtr_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *DoublePtr) bool {
+  if field == "DoublePtr" {
+    DoublePtr_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 func DoublePtr_ptr1_json_unmarshal (iter *jsoniter.Iterator, out **string) {

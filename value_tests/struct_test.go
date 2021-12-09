@@ -37,3 +37,10 @@ func Test_struct5(t *testing.T) {
 	compareWithStdlib(`{"Field2":"world","Field3":"abc","Embed3":"123"}`,
 		jsoniter.CreateJsonAdapter(WithEmbedStruct_json{}), &val1, &val2)
 }
+
+func Test_struct6(t *testing.T) {
+	var val1 WithNamelessField
+	var val2 WithNamelessField
+	compareWithStdlib(`{"WithNamelessField_f1":12.34,"WithNamelessField_f2":true,"string":"hello","int":1}`,
+		jsoniter.CreateJsonAdapter(WithNamelessField_json{}), &val1, &val2)
+}

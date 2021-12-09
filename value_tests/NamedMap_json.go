@@ -23,6 +23,10 @@ func NamedMap_json_unmarshal(iter *jsoniter.Iterator, out *NamedMap) {
   }
 }
 func NamedMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NamedMap) bool {
+  if field == "NamedMap" {
+    NamedMap_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 type NamedMap_json struct {

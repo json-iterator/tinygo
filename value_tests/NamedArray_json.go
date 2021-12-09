@@ -21,6 +21,10 @@ func NamedArray_json_unmarshal(iter *jsoniter.Iterator, out *NamedArray) {
   }
 }
 func NamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *NamedArray) bool {
+  if field == "NamedArray" {
+    NamedArray_json_unmarshal(iter, out)
+    return true
+  }
   return false
 }
 type NamedArray_json struct {
