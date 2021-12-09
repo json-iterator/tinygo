@@ -44,8 +44,14 @@ func main() {
 		genStruct(typeName, x)
 	case *ast.MapType:
 		genMap(x)
+	case *ast.StarExpr:
+		_f("    var val %s", nodeToString(x.X))
+		genDecodeStmt(x.X, "&val")
+		_l("    if iter.Error == nil {")
+		_l("      *out = &val")
+		_l("    }")
 	default:
-		reportError(fmt.Errorf("unknown type of TypeSpec"))
+		reportError(fmt.Errorf("not supported type: %s", typeSpec.Name.Name))
 		return
 	}
 	mainDecoder := lines
