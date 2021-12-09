@@ -45,13 +45,9 @@ func main() {
 	case *ast.MapType:
 		genMap(x)
 	case *ast.StarExpr:
-		_f("    var val %s", nodeToString(x.X))
-		genDecodeStmt(x.X, "&val")
-		_l("    if iter.Error == nil {")
-		_l("      *out = &val")
-		_l("    }")
+		genPtr(x)
 	default:
-		reportError(fmt.Errorf("not supported type: %s", typeSpec.Name.Name))
+		reportError(fmt.Errorf("not supported type: %s", nodeToString(typeSpec)))
 		return
 	}
 	mainDecoder := lines
@@ -164,6 +160,28 @@ func genAnonymousMap(mapType *ast.MapType) string {
 	anonymousDecoders = append(anonymousDecoders, lines...)
 	lines = oldLines
 	return decoderName + "_json_unmarshal(iter, %s)"
+}
+
+func genAnonymousPtr(ptrType *ast.StarExpr) string {
+	decoderName := fmt.Sprintf(`%s_ptr%d`, prefix, anonymousCounter)
+	typeName := nodeToString(ptrType)
+	anonymousCounter++
+	oldLines := lines
+	lines = []byte{}
+	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
+	genPtr(ptrType)
+	_l("}")
+	anonymousDecoders = append(anonymousDecoders, lines...)
+	lines = oldLines
+	return decoderName + "_json_unmarshal(iter, %s)"
+}
+
+func genPtr(ptrType *ast.StarExpr) {
+	_f("    var val %s", nodeToString(ptrType.X))
+	genDecodeStmt(ptrType.X, "&val")
+	_l("    if iter.Error == nil {")
+	_l("      *out = &val")
+	_l("    }")
 }
 
 func genMap(mapType *ast.MapType) {
@@ -341,6 +359,8 @@ func genDecodeStmt(node ast.Node, ptr string) {
 		_f("    "+genAnonymousStruct(x), ptr)
 	case *ast.MapType:
 		_f("    "+genAnonymousMap(x), ptr)
+	case *ast.StarExpr:
+		_f("    "+genAnonymousPtr(x), ptr)
 	case *ast.InterfaceType:
 		if nodeToString(node) == "interface{}" {
 			_f("    iter.ReadInterface(%s)", ptr)
