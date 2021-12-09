@@ -264,19 +264,31 @@ func genStructField(structType *ast.StructType) {
 			continue
 		}
 		switch x := field.Type.(type) {
-		case *ast.StarExpr:
-			if ident, ok := x.X.(*ast.Ident); ok {
-				_f("  var val%d %s", i, ident.Name)
-				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", ident.Name, i)
-				_f("    out.%s = new(%s)", ident.Name, ident.Name)
-				_f("    *out.%s = val%d", ident.Name, i)
+		case *ast.StarExpr: // embed pointer
+			switch y := x.X.(type) {
+			case *ast.Ident:
+				_f("  var val%d %s", i, y.Name)
+				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", y.Name, i)
+				_f("    out.%s = new(%s)", y.Name, y.Name)
+				_f("    *out.%s = val%d", y.Name, i)
 				_l("    return true")
 				_l("  }")
-			} else {
-				reportError(fmt.Errorf("unknown embed field type: %s", field.Type))
+			case *ast.SelectorExpr:
+				if y.Sel.Name == "Number" {
+					_l(`  if field == "Number" {`)
+					_f("    out.Number = new(%s)", nodeToString(y))
+					_l("    iter.ReadNumber(out.Number)")
+					_l("    return true")
+					_l("  }")
+				} else {
+					reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(field.Type)))
+					return
+				}
+			default:
+				reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(field.Type)))
 				return
 			}
-		case *ast.Ident:
+		case *ast.Ident: // embed value
 			if x.Name == "string" ||
 				x.Name == "bool" ||
 				x.Name == "int" ||

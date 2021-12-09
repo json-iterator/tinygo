@@ -44,3 +44,15 @@ func Test_struct6(t *testing.T) {
 	compareWithStdlib(`{"WithNamelessField_f1":12.34,"WithNamelessField_f2":true,"string":"hello","int":1}`,
 		jsoniter.CreateJsonAdapter(WithNamelessField_json{}), &val1, &val2)
 }
+
+func Test_struct7(t *testing.T) {
+	var val1 EmbedNumberStruct
+	iter := jsoniter.ParseBytes([]byte(`{"Number":100}`))
+	EmbedNumberStruct_json_unmarshal(iter, &val1)
+	if iter.Error != nil {
+		t.Fatal(iter.Error)
+	}
+	if *val1.Number != jsoniter.Number("100") {
+		t.Fatal(val1.Number)
+	}
+}
