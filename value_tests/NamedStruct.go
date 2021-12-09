@@ -9,5 +9,6 @@ import (
 type NamedStruct struct {
 	Name         string
 	Price        *json.Number
+	Raw          json.RawMessage
 	privateField *bytes.Buffer
 }

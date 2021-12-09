@@ -21,6 +21,9 @@ func NamedStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out
   case field == `Price`:
     NamedStruct_ptr1_json_unmarshal(iter, &(*out).Price)
     return true
+  case field == `Raw`:
+    iter.ReadRawMessage((*jsoniter.RawMessage)(&(*out).Raw))
+    return true
   }
   return false
 }

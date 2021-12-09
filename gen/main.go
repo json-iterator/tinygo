@@ -297,6 +297,9 @@ func genStructField(structType *ast.StructType) {
 					_f("    *out.Number = %s(val)", nodeToString(y))
 					_l("    return true")
 					_l("  }")
+				} else if y.Sel.Name == "RawMessage" {
+					reportError(fmt.Errorf("embed json.RawMessage is not supported"))
+					return
 				} else {
 					typeName := nodeToString(y)
 					_f("  var val%d %s", i, typeName)
@@ -313,6 +316,9 @@ func genStructField(structType *ast.StructType) {
 		case *ast.SelectorExpr:
 			if x.Sel.Name == "Number" {
 				_l(`  if field == "Number" { iter.ReadNumber((*jsoniter.Number)(&out.Number)); return true }`)
+			} else if x.Sel.Name == "RawMessage" {
+				reportError(fmt.Errorf("embed json.RawMessage is not supported"))
+				return
 			} else {
 				alias := nodeToString(x.X)
 				if path, ok := allImports[alias]; ok {
@@ -454,6 +460,8 @@ func genDecodeStmt(node ast.Node, ptr string) {
 	case *ast.SelectorExpr:
 		if x.Sel.Name == "Number" {
 			_f("    iter.ReadNumber((*jsoniter.Number)(%s))", ptr)
+		} else if x.Sel.Name == "RawMessage" {
+			_f("    iter.ReadRawMessage((*jsoniter.RawMessage)(%s))", ptr)
 		} else {
 			alias := nodeToString(x.X)
 			if path, ok := allImports[alias]; ok {

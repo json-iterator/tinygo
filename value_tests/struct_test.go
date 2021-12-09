@@ -57,3 +57,9 @@ func Test_struct7(t *testing.T) {
 		t.Fatal(val1.Number)
 	}
 }
+
+func Test_struct8(t *testing.T) {
+	var val1 NamedStruct
+	var val2 NamedStruct
+	compareWithStdlib(`{"Raw":["a",1]}`, jsoniter.CreateJsonAdapter(NamedStruct_json{}), &val1, &val2)
+}
