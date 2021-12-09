@@ -10,6 +10,7 @@ type RefNamedArray struct {
 import "encoding/json"
 
 var val1 RefNamedArray
+var val2 NamedArray
 json.Unmarshal([]byte(`{ "Value": ["hello","world"] }`), &val1)
 json.Unmarshal([]byte(`["hello","world"]`), &val2) 
 ```
