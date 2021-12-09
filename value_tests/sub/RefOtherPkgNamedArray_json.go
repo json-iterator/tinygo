@@ -7,14 +7,19 @@ func RefOtherPkgNamedArray_json_unmarshal(iter *jsoniter.Iterator, out *RefOther
   more := iter.ReadObjectHead()
   for more {
     field := iter.ReadObjectField()
-    switch {
-    case field == `Value`:
-    value_tests.NamedArray_json_unmarshal(iter, &(*out).Value)
-    default:
+    if !RefOtherPkgNamedArray_json_unmarshal_field(iter, field, out) {
       iter.Skip()
     }
     more = iter.ReadObjectMore()
   }
+}
+func RefOtherPkgNamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *RefOtherPkgNamedArray) bool {
+  switch {
+  case field == `Value`:
+    value_tests.NamedArray_json_unmarshal(iter, &(*out).Value)
+    return true
+  }
+  return false
 }
 type RefOtherPkgNamedArray_json struct {
 }

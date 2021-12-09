@@ -274,20 +274,33 @@ func genStructField(structType *ast.StructType) {
 				_l("    return true")
 				_l("  }")
 			case *ast.SelectorExpr:
-				if y.Sel.Name == "Number" {
-					_l(`  if field == "Number" {`)
-					_f("    out.Number = new(%s)", nodeToString(y))
-					_l("    iter.ReadNumber(out.Number)")
-					_l("    return true")
-					_l("  }")
+				alias := nodeToString(y.X)
+				if path, ok := allImports[alias]; ok {
+					referencedImports[alias] = path
 				} else {
-					reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(field.Type)))
+					reportError(fmt.Errorf("unknown import: %s", alias))
 					return
 				}
+				typeName := nodeToString(y)
+				_f("  var val%d %s", i, typeName)
+				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", typeName, i)
+				_f("    out.%s = new(%s)", y.Sel.Name, typeName)
+				_f("    *out.%s = val%d", y.Sel.Name, i)
+				_l("    return true")
+				_l("  }")
 			default:
 				reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(field.Type)))
 				return
 			}
+		case *ast.SelectorExpr:
+			alias := nodeToString(x.X)
+			if path, ok := allImports[alias]; ok {
+				referencedImports[alias] = path
+			} else {
+				reportError(fmt.Errorf("unknown import: %s", alias))
+				return
+			}
+			_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", nodeToString(x), x.Sel.Name)
 		case *ast.Ident: // embed value
 			if x.Name == "string" ||
 				x.Name == "bool" ||

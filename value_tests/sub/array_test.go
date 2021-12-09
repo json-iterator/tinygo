@@ -36,3 +36,17 @@ func Test_RefOtherPkgNamedArray(t *testing.T) {
 	var val2 RefOtherPkgNamedArray
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(RefOtherPkgNamedArray_json{}), &val1, &val2)
 }
+
+func Test_EmbedOtherPkgNamedArray(t *testing.T) {
+	input := `{ "NamedArray": ["hello","world"] }`
+	var val1 EmbedOtherPkgNamedArray
+	var val2 EmbedOtherPkgNamedArray
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(EmbedOtherPkgNamedArray_json{}), &val1, &val2)
+}
+
+func Test_EmbedViaPtr(t *testing.T) {
+	input := `{ "NamedArray": ["hello","world"] }`
+	var val1 EmbedViaPtr
+	var val2 EmbedViaPtr
+	compareWithStdlib(input, jsoniter.CreateJsonAdapter(EmbedViaPtr_json{}), &val1, &val2)
+}
