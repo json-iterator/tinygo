@@ -14,6 +14,9 @@ func (stream *Stream) WriteInterface(val interface{}) bool {
 	case uint16:
 		stream.WriteUint16(x)
 		return true
+	case int16:
+		stream.WriteInt16(x)
+		return true
 	}
 	return false
 }
