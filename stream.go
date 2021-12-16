@@ -2,7 +2,6 @@ package jsoniter
 
 type Stream struct {
 	buf         []byte
-	Error       error
 	indentCount int
 	Prefix      string
 	Indent      string
@@ -12,7 +11,6 @@ type Stream struct {
 func NewStream() *Stream {
 	return &Stream{
 		buf:         make([]byte, 0, 16),
-		Error:       nil,
 		indentCount: 0,
 	}
 }
