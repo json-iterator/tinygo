@@ -23,6 +23,9 @@ func (stream *Stream) WriteInterface(val interface{}) bool {
 	case int32:
 		stream.WriteInt32(x)
 		return true
+	case uint64:
+		stream.WriteUint64(x)
+		return true
 	}
 	return false
 }

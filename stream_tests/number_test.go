@@ -127,3 +127,25 @@ func Test_write_int32(t *testing.T) {
 		})
 	}
 }
+
+func Test_write_uint64(t *testing.T) {
+	vals := []uint64{0, 1, 11, 111, 255, 999999, 0xfff, 0xffff, 0xfffff, 0xffffff, 0xfffffff, 0xffffffff,
+		0xfffffffff, 0xffffffffff, 0xfffffffffff, 0xffffffffffff, 0xfffffffffffff, 0xffffffffffffff,
+		0xfffffffffffffff, 0xffffffffffffffff}
+	for _, val := range vals {
+		t.Run(fmt.Sprintf("%v", val), func(t *testing.T) {
+			stream := jsoniter.NewStream()
+			stream.WriteUint64(val)
+			if strconv.FormatUint(uint64(val), 10) != string(stream.Buffer()) {
+				t.Fatal()
+			}
+		})
+		t.Run(fmt.Sprintf("%v", val), func(t *testing.T) {
+			stream := jsoniter.NewStream()
+			stream.WriteInterface(val)
+			if strconv.FormatUint(uint64(val), 10) != string(stream.Buffer()) {
+				t.Fatal()
+			}
+		})
+	}
+}
