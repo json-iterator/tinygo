@@ -27,3 +27,23 @@ func Test_write_uint8(t *testing.T) {
 		})
 	}
 }
+
+func Test_write_int8(t *testing.T) {
+	vals := []int8{0, 1, -1, 99, 0x7f, -0x80}
+	for _, val := range vals {
+		t.Run(fmt.Sprintf("%v", val), func(t *testing.T) {
+			stream := jsoniter.NewStream()
+			stream.WriteInt8(val)
+			if strconv.FormatInt(int64(val), 10) != string(stream.Buffer()) {
+				t.Fatal(string(stream.Buffer()))
+			}
+		})
+		t.Run(fmt.Sprintf("%v", val), func(t *testing.T) {
+			stream := jsoniter.NewStream()
+			stream.WriteInterface(val)
+			if strconv.FormatInt(int64(val), 10) != string(stream.Buffer()) {
+				t.Fatal(string(stream.Buffer()))
+			}
+		})
+	}
+}

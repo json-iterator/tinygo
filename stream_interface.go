@@ -8,6 +8,9 @@ func (stream *Stream) WriteInterface(val interface{}) bool {
 	case uint8:
 		stream.WriteUint8(x)
 		return true
+	case int8:
+		stream.WriteInt8(x)
+		return true
 	}
 	return false
 }
