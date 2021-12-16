@@ -5,6 +5,12 @@ func (stream *Stream) WriteInterface(val interface{}) bool {
 	case bool:
 		stream.WriteBool(x)
 		return true
+	case uint:
+		stream.WriteUint(x)
+		return true
+	case int:
+		stream.WriteInt(x)
+		return true
 	case uint8:
 		stream.WriteUint8(x)
 		return true
@@ -25,6 +31,15 @@ func (stream *Stream) WriteInterface(val interface{}) bool {
 		return true
 	case uint64:
 		stream.WriteUint64(x)
+		return true
+	case int64:
+		stream.WriteInt64(x)
+		return true
+	case float32:
+		stream.WriteFloat32(x)
+		return true
+	case float64:
+		stream.WriteFloat64(x)
 		return true
 	}
 	return false
