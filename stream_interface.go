@@ -2,6 +2,9 @@ package jsoniter
 
 func (stream *Stream) WriteInterface(val interface{}) bool {
 	switch x := val.(type) {
+	case string:
+		stream.WriteString(x)
+		return true
 	case bool:
 		stream.WriteBool(x)
 		return true
