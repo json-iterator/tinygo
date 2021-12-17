@@ -83,6 +83,13 @@ func encodeAnonymousStruct(structType *ast.StructType) string {
 }
 
 func encodeArray(arrayType *ast.ArrayType) {
+	if arrayType.Len != nil {
+		arrayLen, err := strconv.ParseInt(nodeToString(arrayType.Len), 10, 64)
+		if err == nil && arrayLen < 10 {
+			encodeFixedSizeArray(arrayType, int(arrayLen))
+			return
+		}
+	}
 	_l("  if len(val) == 0 {")
 	_l("    stream.WriteEmptyArray()")
 	_l("  } else {")
@@ -93,6 +100,17 @@ func encodeArray(arrayType *ast.ArrayType) {
 	_l("    }")
 	_l("    stream.WriteArrayTail()")
 	_l("  }")
+}
+
+func encodeFixedSizeArray(arrayType *ast.ArrayType, length int) {
+	_l("    stream.WriteArrayHead()")
+	for i := 0; i < length; i++ {
+		if i != 0 {
+			_l("    stream.WriteMore()")
+		}
+		genEncodeStmt(arrayType.Elt, fmt.Sprintf("val[%d]", i))
+	}
+	_l("    stream.WriteArrayTail()")
 }
 
 func encodeMap(mapType *ast.MapType) {

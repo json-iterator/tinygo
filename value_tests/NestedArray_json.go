@@ -66,14 +66,9 @@ func NestedArray_json_marshal(stream *jsoniter.Stream, val NestedArray) {
   }
 }
 func NestedArray_array2_json_marshal (stream *jsoniter.Stream, val [2]float64) {
-  if len(val) == 0 {
-    stream.WriteEmptyArray()
-  } else {
     stream.WriteArrayHead()
-    for i, elem := range val {
-      if i != 0 { stream.WriteMore() }
-    stream.WriteFloat64(elem)
-    }
+    stream.WriteFloat64(val[0])
+    stream.WriteMore()
+    stream.WriteFloat64(val[1])
     stream.WriteArrayTail()
-  }
 }
