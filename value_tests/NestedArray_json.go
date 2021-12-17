@@ -2,6 +2,18 @@ package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
 
+type NestedArray_json struct {
+}
+func (json NestedArray_json) Type() interface{} {
+  var val NestedArray
+  return val
+}
+func (json NestedArray_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  NestedArray_json_unmarshal(iter, out.(*NestedArray))
+}
+func (json NestedArray_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  NestedArray_json_marshal(stream, val.(NestedArray))
+}
 func NestedArray_json_unmarshal(iter *jsoniter.Iterator, out *NestedArray) {
   i := 0
   val := *out
@@ -41,12 +53,27 @@ func NestedArray_array1_json_unmarshal (iter *jsoniter.Iterator, out *[2]float64
     more = iter.ReadArrayMore()
   }
 }
-type NestedArray_json struct {
+func NestedArray_json_marshal(stream *jsoniter.Stream, val NestedArray) {
+  if len(val) == 0 {
+    stream.WriteEmptyArray()
+  } else {
+    stream.WriteArrayHead()
+    for i, elem := range val {
+      if i != 0 { stream.WriteMore() }
+    NestedArray_array2_json_marshal(stream, elem)
+    }
+    stream.WriteArrayTail()
+  }
 }
-func (json NestedArray_json) Type() interface{} {
-  var val NestedArray
-  return &val
-}
-func (json NestedArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  NestedArray_json_unmarshal(iter, val.(*NestedArray))
+func NestedArray_array2_json_marshal (stream *jsoniter.Stream, val [2]float64) {
+  if len(val) == 0 {
+    stream.WriteEmptyArray()
+  } else {
+    stream.WriteArrayHead()
+    for i, elem := range val {
+      if i != 0 { stream.WriteMore() }
+    stream.WriteFloat64(elem)
+    }
+    stream.WriteArrayTail()
+  }
 }

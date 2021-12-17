@@ -2,6 +2,18 @@ package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
 
+type DoublePtr_json struct {
+}
+func (json DoublePtr_json) Type() interface{} {
+  var val DoublePtr
+  return val
+}
+func (json DoublePtr_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  DoublePtr_json_unmarshal(iter, out.(*DoublePtr))
+}
+func (json DoublePtr_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  DoublePtr_json_marshal(stream, val.(DoublePtr))
+}
 func DoublePtr_json_unmarshal(iter *jsoniter.Iterator, out *DoublePtr) {
     var val *string
     DoublePtr_ptr1_json_unmarshal(iter, &val)
@@ -23,12 +35,10 @@ func DoublePtr_ptr1_json_unmarshal (iter *jsoniter.Iterator, out **string) {
       *out = &val
     }
 }
-type DoublePtr_json struct {
-}
-func (json DoublePtr_json) Type() interface{} {
-  var val DoublePtr
-  return &val
-}
-func (json DoublePtr_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  DoublePtr_json_unmarshal(iter, val.(*DoublePtr))
+func DoublePtr_json_marshal(stream *jsoniter.Stream, val DoublePtr) {
+    if *val == nil {
+       stream.WriteNull()
+    } else {
+    stream.WriteString(**val)
+    }
 }

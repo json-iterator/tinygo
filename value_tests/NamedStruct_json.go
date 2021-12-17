@@ -3,6 +3,18 @@ package value_tests
 import jsoniter "github.com/json-iterator/tinygo"
 import json "encoding/json"
 
+type NamedStruct_json struct {
+}
+func (json NamedStruct_json) Type() interface{} {
+  var val NamedStruct
+  return val
+}
+func (json NamedStruct_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  NamedStruct_json_unmarshal(iter, out.(*NamedStruct))
+}
+func (json NamedStruct_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  NamedStruct_json_marshal(stream, val.(NamedStruct))
+}
 func NamedStruct_json_unmarshal(iter *jsoniter.Iterator, out *NamedStruct) {
   more := iter.ReadObjectHead()
   for more {
@@ -34,12 +46,19 @@ func NamedStruct_ptr1_json_unmarshal (iter *jsoniter.Iterator, out **json.Number
       *out = &val
     }
 }
-type NamedStruct_json struct {
-}
-func (json NamedStruct_json) Type() interface{} {
-  var val NamedStruct
-  return &val
-}
-func (json NamedStruct_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  NamedStruct_json_unmarshal(iter, val.(*NamedStruct))
+func NamedStruct_json_marshal(stream *jsoniter.Stream, val NamedStruct) {
+    stream.WriteObjectHead()
+    stream.WriteObjectField(`Name`)
+    stream.WriteString(val.Name)
+    stream.WriteMore()
+    stream.WriteObjectField(`Price`)
+    if val.Price == nil {
+       stream.WriteNull()
+    } else {
+    stream.WriteRawOrNull(string(*val.Price))
+    }
+    stream.WriteMore()
+    stream.WriteObjectField(`Raw`)
+    stream.WriteRawOrNull(string(val.Raw))
+    stream.WriteObjectTail()
 }

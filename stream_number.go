@@ -23,7 +23,7 @@ func init() {
 // WriteFloat32 write float32 to stream
 func (stream *Stream) WriteFloat32(val float32) error {
 	if math.IsInf(float64(val), 0) || math.IsNaN(float64(val)) {
-		return fmt.Errorf("unsupported value: %f", val)
+		return stream.reportError(fmt.Errorf("unsupported value: %f", val))
 	}
 	abs := math.Abs(float64(val))
 	fmt := byte('f')
@@ -40,7 +40,7 @@ func (stream *Stream) WriteFloat32(val float32) error {
 // WriteFloat64 write float64 to stream
 func (stream *Stream) WriteFloat64(val float64) error {
 	if math.IsInf(val, 0) || math.IsNaN(val) {
-		return fmt.Errorf("unsupported value: %f", val)
+		return stream.reportError(fmt.Errorf("unsupported value: %f", val))
 	}
 	abs := math.Abs(val)
 	fmt := byte('f')

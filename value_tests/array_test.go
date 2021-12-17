@@ -3,6 +3,7 @@ package value_tests
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	jsoniter "github.com/json-iterator/tinygo"
@@ -10,14 +11,21 @@ import (
 
 func compareWithStdlib(input string, json1 jsoniter.JsonAdapter, val1 interface{}, val2 interface{}) {
 	err1 := json1.Unmarshal([]byte(input), val1)
-	bytes1, err := json.Marshal(val1)
+	bytes1, err := json.MarshalIndent(val1, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 	err2 := json.Unmarshal([]byte(input), val2)
-	bytes2, err := json.Marshal(val2)
+	bytes2, err := json.MarshalIndent(val2, "", "  ")
 	if err != nil {
 		panic(err)
+	}
+	bytes3, err := json1.MarshalIndent(reflect.ValueOf(val2).Elem().Interface(), "", "  ")
+	if err == nil {
+		err = json.Unmarshal(bytes3, val1)
+		if err != nil {
+			panic(fmt.Errorf("marshal output invalid: %s", string(bytes3)))
+		}
 	}
 	if err1 != nil && err2 == nil {
 		panic(fmt.Errorf("expect no error, but found error: %w", err1))

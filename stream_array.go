@@ -1,7 +1,7 @@
 package jsoniter
 
-// WriteArrayStart write [ with possible indention
-func (stream *Stream) WriteArrayStart() {
+// WriteArrayHead write [ with possible indention
+func (stream *Stream) WriteArrayHead() {
 	stream.writeByte('[')
 	stream.indentCount += 1
 	stream.writeIndent()
@@ -12,8 +12,8 @@ func (stream *Stream) WriteEmptyArray() {
 	stream.writeTwoBytes('[', ']')
 }
 
-// WriteArrayEnd write ] with possible indention
-func (stream *Stream) WriteArrayEnd() {
+// WriteArrayTail write ] with possible indention
+func (stream *Stream) WriteArrayTail() {
 	stream.indentCount -= 1
 	stream.writeIndent()
 	stream.writeByte(']')

@@ -2,6 +2,18 @@ package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
 
+type EmptyStruct_json struct {
+}
+func (json EmptyStruct_json) Type() interface{} {
+  var val EmptyStruct
+  return val
+}
+func (json EmptyStruct_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  EmptyStruct_json_unmarshal(iter, out.(*EmptyStruct))
+}
+func (json EmptyStruct_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  EmptyStruct_json_marshal(stream, val.(EmptyStruct))
+}
 func EmptyStruct_json_unmarshal(iter *jsoniter.Iterator, out *EmptyStruct) {
   more := iter.ReadObjectHead()
   for more {
@@ -15,12 +27,7 @@ func EmptyStruct_json_unmarshal(iter *jsoniter.Iterator, out *EmptyStruct) {
 func EmptyStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *EmptyStruct) bool {
   return false
 }
-type EmptyStruct_json struct {
-}
-func (json EmptyStruct_json) Type() interface{} {
-  var val EmptyStruct
-  return &val
-}
-func (json EmptyStruct_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  EmptyStruct_json_unmarshal(iter, val.(*EmptyStruct))
+func EmptyStruct_json_marshal(stream *jsoniter.Stream, val EmptyStruct) {
+    stream.WriteObjectHead()
+    stream.WriteObjectTail()
 }

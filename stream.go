@@ -3,6 +3,7 @@ package jsoniter
 type Stream struct {
 	buf         []byte
 	indentCount int
+	Error       error
 	Prefix      string
 	Indent      string
 }
@@ -55,6 +56,14 @@ func (stream *Stream) WriteRaw(s string) {
 	stream.buf = append(stream.buf, s...)
 }
 
+func (stream *Stream) WriteRawOrNull(s string) {
+	if s == "" {
+		stream.WriteNull()
+	} else {
+		stream.WriteRaw(s)
+	}
+}
+
 // WriteNull write null to stream
 func (stream *Stream) WriteNull() {
 	stream.writeFourBytes('n', 'u', 'l', 'l')
@@ -78,4 +87,11 @@ func (stream *Stream) writeIndent() {
 	for i := 0; i < stream.indentCount; i++ {
 		stream.buf = append(stream.buf, stream.Indent...)
 	}
+}
+
+func (stream *Stream) reportError(err error) error {
+	if stream.Error == nil {
+		stream.Error = err
+	}
+	return err
 }

@@ -2,6 +2,18 @@ package value_tests
 
 import jsoniter "github.com/json-iterator/tinygo"
 
+type AnonymousMap_json struct {
+}
+func (json AnonymousMap_json) Type() interface{} {
+  var val AnonymousMap
+  return val
+}
+func (json AnonymousMap_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  AnonymousMap_json_unmarshal(iter, out.(*AnonymousMap))
+}
+func (json AnonymousMap_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  AnonymousMap_json_marshal(stream, val.(AnonymousMap))
+}
 func AnonymousMap_json_unmarshal(iter *jsoniter.Iterator, out *AnonymousMap) {
   more := iter.ReadObjectHead()
   for more {
@@ -40,12 +52,27 @@ func AnonymousMap_map1_json_unmarshal (iter *jsoniter.Iterator, out *map[string]
     more = iter.ReadObjectMore()
   }
 }
-type AnonymousMap_json struct {
+func AnonymousMap_json_marshal(stream *jsoniter.Stream, val AnonymousMap) {
+    stream.WriteObjectHead()
+    stream.WriteObjectField(`Value`)
+    AnonymousMap_map2_json_marshal(stream, val.Value)
+    stream.WriteObjectTail()
 }
-func (json AnonymousMap_json) Type() interface{} {
-  var val AnonymousMap
-  return &val
-}
-func (json AnonymousMap_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  AnonymousMap_json_unmarshal(iter, val.(*AnonymousMap))
+func AnonymousMap_map2_json_marshal (stream *jsoniter.Stream, val map[string]string) {
+  if len(val) == 0 {
+    stream.WriteEmptyObject()
+  } else {
+    isFirst := true
+    stream.WriteObjectHead()
+    for k, v := range val {
+      if isFirst {
+        isFirst = false
+      } else {
+        stream.WriteMore()
+      }
+      stream.WriteObjectField(k)
+    stream.WriteString(v)
+    }
+    stream.WriteObjectTail()
+  }
 }
