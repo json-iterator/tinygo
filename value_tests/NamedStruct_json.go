@@ -48,6 +48,10 @@ func NamedStruct_ptr1_json_unmarshal (iter *jsoniter.Iterator, out **json.Number
 }
 func NamedStruct_json_marshal(stream *jsoniter.Stream, val NamedStruct) {
     stream.WriteObjectHead()
+    NamedStruct_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func NamedStruct_json_marshal_field(stream *jsoniter.Stream, val NamedStruct) {
     stream.WriteObjectField(`Name`)
     stream.WriteString(val.Name)
     stream.WriteMore()
@@ -60,5 +64,5 @@ func NamedStruct_json_marshal(stream *jsoniter.Stream, val NamedStruct) {
     stream.WriteMore()
     stream.WriteObjectField(`Raw`)
     stream.WriteRawOrNull(string(val.Raw))
-    stream.WriteObjectTail()
+    stream.WriteMore()
 }

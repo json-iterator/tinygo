@@ -36,5 +36,8 @@ func WithNamelessField_json_unmarshal_field(iter *jsoniter.Iterator, field strin
 }
 func WithNamelessField_json_marshal(stream *jsoniter.Stream, val WithNamelessField) {
     stream.WriteObjectHead()
+    WithNamelessField_json_marshal_field(stream, val)
     stream.WriteObjectTail()
+}
+func WithNamelessField_json_marshal_field(stream *jsoniter.Stream, val WithNamelessField) {
 }

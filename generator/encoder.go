@@ -12,22 +12,42 @@ var anonymousEncoders = []byte{}
 func generateEncoders(typeSpec *ast.TypeSpec) []byte {
 	typeName := typeSpec.Name.Name
 	lines = []byte{}
-	encodeType(typeSpec.Type)
+	encodeType(typeName, typeSpec.Type)
 	mainEncoder := lines
+	lines = []byte{}
+	switch x := typeSpec.Type.(type) {
+	case *ast.StructType:
+		encodeStructField(x)
+	case *ast.StarExpr:
+		encodeOtherField(typeName)
+	case *ast.MapType:
+		encodeOtherField(typeName)
+	case *ast.ArrayType:
+		encodeOtherField(typeName)
+	case *ast.Ident:
+		encodeOtherField(typeName)
+	default:
+		reportError(fmt.Errorf("not supported type: %s", nodeToString(typeSpec)))
+		return nil
+	}
+	fieldsEncoder := lines
 	lines = []byte{}
 	_f("func %s_json_marshal(stream *jsoniter.Stream, val %s) {", prefix, typeName)
 	lines = append(lines, mainEncoder...)
+	_l("}")
+	_f("func %s_json_marshal_field(stream *jsoniter.Stream, val %s) {", prefix, typeName)
+	lines = append(lines, fieldsEncoder...)
 	_l("}")
 	lines = append(lines, anonymousEncoders...)
 	return lines
 }
 
-func encodeType(t ast.Expr) {
+func encodeType(typeName string, t ast.Expr) {
 	switch x := t.(type) {
 	case *ast.ArrayType:
 		encodeArray(x)
 	case *ast.StructType:
-		encodeStruct(x)
+		encodeStruct(typeName, x)
 	case *ast.MapType:
 		encodeMap(x)
 	case *ast.StarExpr:
@@ -74,8 +94,11 @@ func encodeAnonymousStruct(structType *ast.StructType) string {
 	anonymousCounter++
 	oldLines := lines
 	lines = []byte{}
+	_f("func %s_json_marshal_field (stream *jsoniter.Stream, val %s) {", encoderName, typeName)
+	encodeStructField(structType)
+	_l("}")
 	_f("func %s_json_marshal (stream *jsoniter.Stream, val %s) {", encoderName, typeName)
-	encodeStruct(structType)
+	encodeStruct(encoderName, structType)
 	_l("}")
 	anonymousEncoders = append(anonymousEncoders, lines...)
 	lines = oldLines
@@ -114,22 +137,13 @@ func encodeFixedSizeArray(arrayType *ast.ArrayType, length int) {
 }
 
 func encodeMap(mapType *ast.MapType) {
-	_l("  if len(val) == 0 {")
-	_l("    stream.WriteEmptyObject()")
-	_l("  } else {")
-	_l("    isFirst := true")
-	_l("    stream.WriteObjectHead()")
-	_l("    for k, v := range val {")
-	_l("      if isFirst {")
-	_l("        isFirst = false")
-	_l("      } else {")
-	_l("        stream.WriteMore()")
-	_l("      }")
+	_l("  stream.WriteObjectHead()")
+	_l("  for k, v := range val {")
 	switch x := mapType.Key.(type) {
 	case *ast.Ident:
 		switch x.Name {
 		case "string":
-			_l("      stream.WriteObjectField(k)")
+			_l("    stream.WriteObjectField(k)")
 		case "int":
 			fallthrough
 		case "uint":
@@ -159,14 +173,18 @@ func encodeMap(mapType *ast.MapType) {
 		reportError(fmt.Errorf("unsupported map key type: %s", nodeToString(mapType.Key)))
 	}
 	genEncodeStmt(mapType.Value, "v")
-	_l("    }")
-	_l("    stream.WriteObjectTail()")
+	_l("    stream.WriteMore()")
 	_l("  }")
+	_l("  stream.WriteObjectTail()")
 }
 
-func encodeStruct(structType *ast.StructType) {
+func encodeStruct(typeName string, structType *ast.StructType) {
 	_l("    stream.WriteObjectHead()")
-	isFirst := true
+	_f("    %s_json_marshal_field(stream, val)", typeName)
+	_l("    stream.WriteObjectTail()")
+}
+
+func encodeStructField(structType *ast.StructType) {
 	for _, field := range structType.Fields.List {
 		if len(field.Names) == 0 {
 			continue
@@ -192,15 +210,16 @@ func encodeStruct(structType *ast.StructType) {
 		if isNotExported {
 			continue
 		}
-		if isFirst {
-			isFirst = false
-		} else {
-			_l("    stream.WriteMore()")
-		}
 		_f("    stream.WriteObjectField(`%s`)", encodedFieldName)
 		genEncodeStmt(field.Type, fmt.Sprintf("val.%s", fieldName))
+		_l("    stream.WriteMore()")
 	}
-	_l("    stream.WriteObjectTail()")
+}
+
+func encodeOtherField(typeName string) {
+	_f(`    stream.WriteObjectField("%s")`, typeName)
+	_f("    %s_json_marshal(stream, val)", prefix)
+	_l("    stream.WriteMore()")
 }
 
 func genEncodeStmt(node ast.Node, val string) {

@@ -34,7 +34,11 @@ func WithStructTag_json_unmarshal_field(iter *jsoniter.Iterator, field string, o
 }
 func WithStructTag_json_marshal(stream *jsoniter.Stream, val WithStructTag) {
     stream.WriteObjectHead()
+    WithStructTag_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func WithStructTag_json_marshal_field(stream *jsoniter.Stream, val WithStructTag) {
     stream.WriteObjectField(`field1`)
     stream.WriteString(val.Field1)
-    stream.WriteObjectTail()
+    stream.WriteMore()
 }

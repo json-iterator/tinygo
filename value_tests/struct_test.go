@@ -28,8 +28,13 @@ func Test_struct3(t *testing.T) {
 func Test_struct4(t *testing.T) {
 	var val1 WithEmbedStruct
 	var val2 WithEmbedStruct
+	jsonAdapter := jsoniter.CreateJsonAdapter(WithEmbedStruct_json{})
 	compareWithStdlib(`{"Field1":"hello","Field2":"world","Field3":"abc","Embed3":"123"}`,
-		jsoniter.CreateJsonAdapter(WithEmbedStruct_json{}), &val1, &val2)
+		jsonAdapter, &val1, &val2)
+	// bytes, _ := jsonAdapter.MarshalIndent(val2, "", "  ")
+	// if !strings.Contains(string(bytes), "Field1") {
+	// 	t.Fatal(string(bytes))
+	// }
 }
 
 func Test_struct5(t *testing.T) {

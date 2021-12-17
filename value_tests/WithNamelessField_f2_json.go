@@ -27,3 +27,8 @@ func WithNamelessField_f2_json_unmarshal_field(iter *jsoniter.Iterator, field st
 func WithNamelessField_f2_json_marshal(stream *jsoniter.Stream, val WithNamelessField_f2) {
     stream.WriteBool((bool)(val))
 }
+func WithNamelessField_f2_json_marshal_field(stream *jsoniter.Stream, val WithNamelessField_f2) {
+    stream.WriteObjectField("WithNamelessField_f2")
+    WithNamelessField_f2_json_marshal(stream, val)
+    stream.WriteMore()
+}

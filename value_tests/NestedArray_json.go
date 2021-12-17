@@ -65,6 +65,11 @@ func NestedArray_json_marshal(stream *jsoniter.Stream, val NestedArray) {
     stream.WriteArrayTail()
   }
 }
+func NestedArray_json_marshal_field(stream *jsoniter.Stream, val NestedArray) {
+    stream.WriteObjectField("NestedArray")
+    NestedArray_json_marshal(stream, val)
+    stream.WriteMore()
+}
 func NestedArray_array2_json_marshal (stream *jsoniter.Stream, val [2]float64) {
     stream.WriteArrayHead()
     stream.WriteFloat64(val[0])

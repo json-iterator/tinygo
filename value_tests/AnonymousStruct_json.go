@@ -61,19 +61,30 @@ func AnonymousStruct_struct1_json_unmarshal (iter *jsoniter.Iterator, out *struc
 }
 func AnonymousStruct_json_marshal(stream *jsoniter.Stream, val AnonymousStruct) {
     stream.WriteObjectHead()
+    AnonymousStruct_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func AnonymousStruct_json_marshal_field(stream *jsoniter.Stream, val AnonymousStruct) {
     stream.WriteObjectField(`Value`)
     AnonymousStruct_struct2_json_marshal(stream, val.Value)
-    stream.WriteObjectTail()
+    stream.WriteMore()
+}
+func AnonymousStruct_struct2_json_marshal_field (stream *jsoniter.Stream, val struct {
+	Name	string
+	Price	int
+}) {
+    stream.WriteObjectField(`Name`)
+    stream.WriteString(val.Name)
+    stream.WriteMore()
+    stream.WriteObjectField(`Price`)
+    stream.WriteInt(val.Price)
+    stream.WriteMore()
 }
 func AnonymousStruct_struct2_json_marshal (stream *jsoniter.Stream, val struct {
 	Name	string
 	Price	int
 }) {
     stream.WriteObjectHead()
-    stream.WriteObjectField(`Name`)
-    stream.WriteString(val.Name)
-    stream.WriteMore()
-    stream.WriteObjectField(`Price`)
-    stream.WriteInt(val.Price)
+    AnonymousStruct_struct2_json_marshal_field(stream, val)
     stream.WriteObjectTail()
 }

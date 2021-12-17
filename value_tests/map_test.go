@@ -10,6 +10,13 @@ func Test_map1(t *testing.T) {
 	input := `{}`
 	var val1 map[string]int
 	var val2 map[string]int
+	stream := jsoniter.NewStream()
+	stream.Prefix = ""
+	stream.Indent = "    "
+	NamedMap_json_marshal(stream, val1)
+	if string(stream.Buffer()) != "{}" {
+		t.Fatal()
+	}
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(NamedMap_json{}), &val1, &val2)
 }
 

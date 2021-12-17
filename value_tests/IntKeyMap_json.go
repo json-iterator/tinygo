@@ -42,22 +42,18 @@ func IntKeyMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *
   return false
 }
 func IntKeyMap_json_marshal(stream *jsoniter.Stream, val IntKeyMap) {
-  if len(val) == 0 {
-    stream.WriteEmptyObject()
-  } else {
-    isFirst := true
-    stream.WriteObjectHead()
-    for k, v := range val {
-      if isFirst {
-        isFirst = false
-      } else {
-        stream.WriteMore()
-      }
+  stream.WriteObjectHead()
+  for k, v := range val {
       stream.WriteRaw("\"")
     stream.WriteInt(k)
       stream.WriteRaw("\": ")
     stream.WriteString(v)
-    }
-    stream.WriteObjectTail()
+    stream.WriteMore()
   }
+  stream.WriteObjectTail()
+}
+func IntKeyMap_json_marshal_field(stream *jsoniter.Stream, val IntKeyMap) {
+    stream.WriteObjectField("IntKeyMap")
+    IntKeyMap_json_marshal(stream, val)
+    stream.WriteMore()
 }

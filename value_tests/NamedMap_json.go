@@ -42,20 +42,16 @@ func NamedMap_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *N
   return false
 }
 func NamedMap_json_marshal(stream *jsoniter.Stream, val NamedMap) {
-  if len(val) == 0 {
-    stream.WriteEmptyObject()
-  } else {
-    isFirst := true
-    stream.WriteObjectHead()
-    for k, v := range val {
-      if isFirst {
-        isFirst = false
-      } else {
-        stream.WriteMore()
-      }
-      stream.WriteObjectField(k)
+  stream.WriteObjectHead()
+  for k, v := range val {
+    stream.WriteObjectField(k)
     stream.WriteInt(v)
-    }
-    stream.WriteObjectTail()
+    stream.WriteMore()
   }
+  stream.WriteObjectTail()
+}
+func NamedMap_json_marshal_field(stream *jsoniter.Stream, val NamedMap) {
+    stream.WriteObjectField("NamedMap")
+    NamedMap_json_marshal(stream, val)
+    stream.WriteMore()
 }

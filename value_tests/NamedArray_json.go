@@ -51,3 +51,8 @@ func NamedArray_json_marshal(stream *jsoniter.Stream, val NamedArray) {
     stream.WriteArrayTail()
   }
 }
+func NamedArray_json_marshal_field(stream *jsoniter.Stream, val NamedArray) {
+    stream.WriteObjectField("NamedArray")
+    NamedArray_json_marshal(stream, val)
+    stream.WriteMore()
+}

@@ -41,7 +41,11 @@ func WithEmbedStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string,
 }
 func WithEmbedStruct_json_marshal(stream *jsoniter.Stream, val WithEmbedStruct) {
     stream.WriteObjectHead()
+    WithEmbedStruct_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func WithEmbedStruct_json_marshal_field(stream *jsoniter.Stream, val WithEmbedStruct) {
     stream.WriteObjectField(`Field3`)
     stream.WriteString(val.Field3)
-    stream.WriteObjectTail()
+    stream.WriteMore()
 }

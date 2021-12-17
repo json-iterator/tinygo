@@ -34,7 +34,11 @@ func RefNamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, o
 }
 func RefNamedArray_json_marshal(stream *jsoniter.Stream, val RefNamedArray) {
     stream.WriteObjectHead()
+    RefNamedArray_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func RefNamedArray_json_marshal_field(stream *jsoniter.Stream, val RefNamedArray) {
     stream.WriteObjectField(`Value`)
     NamedArray_json_marshal(stream, val.Value)
-    stream.WriteObjectTail()
+    stream.WriteMore()
 }

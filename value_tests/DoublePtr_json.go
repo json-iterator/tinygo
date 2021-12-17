@@ -42,3 +42,8 @@ func DoublePtr_json_marshal(stream *jsoniter.Stream, val DoublePtr) {
     stream.WriteString(**val)
     }
 }
+func DoublePtr_json_marshal_field(stream *jsoniter.Stream, val DoublePtr) {
+    stream.WriteObjectField("DoublePtr")
+    DoublePtr_json_marshal(stream, val)
+    stream.WriteMore()
+}

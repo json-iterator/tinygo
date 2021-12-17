@@ -31,3 +31,8 @@ func NamedPtr_json_unmarshal_field(iter *jsoniter.Iterator, field string, out *N
 func NamedPtr_json_marshal(stream *jsoniter.Stream, val NamedPtr) {
     stream.WriteString(*val)
 }
+func NamedPtr_json_marshal_field(stream *jsoniter.Stream, val NamedPtr) {
+    stream.WriteObjectField("NamedPtr")
+    NamedPtr_json_marshal(stream, val)
+    stream.WriteMore()
+}

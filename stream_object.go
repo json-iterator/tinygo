@@ -19,13 +19,19 @@ func (stream *Stream) WriteObjectField(field string) {
 
 // WriteObjectTail write } with possible indention
 func (stream *Stream) WriteObjectTail() {
+	lookBack := len(stream.buf) - 1 - len(stream.Prefix) - len(stream.Indent)*stream.indentCount
+	if stream.withIndent() {
+		lookBack -= 1
+	}
+	lookBackChar := stream.buf[lookBack]
 	stream.indentCount -= 1
-	stream.writeIndent()
-	stream.writeByte('}')
-}
-
-// WriteEmptyObject write {}
-func (stream *Stream) WriteEmptyObject() {
-	stream.writeByte('{')
+	if lookBackChar == ',' {
+		stream.buf = stream.buf[:lookBack]
+	}
+	if lookBackChar == '{' {
+		stream.buf = stream.buf[:lookBack+1]
+	} else {
+		stream.writeIndent()
+	}
 	stream.writeByte('}')
 }

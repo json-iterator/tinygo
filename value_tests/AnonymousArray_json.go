@@ -52,9 +52,13 @@ func AnonymousArray_array1_json_unmarshal (iter *jsoniter.Iterator, out *[]strin
 }
 func AnonymousArray_json_marshal(stream *jsoniter.Stream, val AnonymousArray) {
     stream.WriteObjectHead()
+    AnonymousArray_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
+}
+func AnonymousArray_json_marshal_field(stream *jsoniter.Stream, val AnonymousArray) {
     stream.WriteObjectField(`Value`)
     AnonymousArray_array2_json_marshal(stream, val.Value)
-    stream.WriteObjectTail()
+    stream.WriteMore()
 }
 func AnonymousArray_array2_json_marshal (stream *jsoniter.Stream, val []string) {
   if len(val) == 0 {

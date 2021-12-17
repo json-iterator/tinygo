@@ -74,14 +74,15 @@ func decodeAnonymousArray(arrayType *ast.ArrayType) string {
 
 func decodeAnonymousStruct(structType *ast.StructType) string {
 	decoderName := fmt.Sprintf(`%s_struct%d`, prefix, anonymousCounter)
+	typeName := nodeToString(structType)
 	anonymousCounter++
 	oldLines := lines
 	lines = []byte{}
-	_f("func %s_json_unmarshal_field (iter *jsoniter.Iterator, field string, out *%s) bool {", decoderName, nodeToString(structType))
+	_f("func %s_json_unmarshal_field (iter *jsoniter.Iterator, field string, out *%s) bool {", decoderName, typeName)
 	decodeStructField(structType)
 	_l("  return false")
 	_l("}")
-	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, nodeToString(structType))
+	_f("func %s_json_unmarshal (iter *jsoniter.Iterator, out *%s) {", decoderName, typeName)
 	decodeStruct(decoderName, structType)
 	_l("}")
 	anonymousDecoders = append(anonymousDecoders, lines...)

@@ -54,25 +54,20 @@ func AnonymousMap_map1_json_unmarshal (iter *jsoniter.Iterator, out *map[string]
 }
 func AnonymousMap_json_marshal(stream *jsoniter.Stream, val AnonymousMap) {
     stream.WriteObjectHead()
-    stream.WriteObjectField(`Value`)
-    AnonymousMap_map2_json_marshal(stream, val.Value)
+    AnonymousMap_json_marshal_field(stream, val)
     stream.WriteObjectTail()
 }
+func AnonymousMap_json_marshal_field(stream *jsoniter.Stream, val AnonymousMap) {
+    stream.WriteObjectField(`Value`)
+    AnonymousMap_map2_json_marshal(stream, val.Value)
+    stream.WriteMore()
+}
 func AnonymousMap_map2_json_marshal (stream *jsoniter.Stream, val map[string]string) {
-  if len(val) == 0 {
-    stream.WriteEmptyObject()
-  } else {
-    isFirst := true
-    stream.WriteObjectHead()
-    for k, v := range val {
-      if isFirst {
-        isFirst = false
-      } else {
-        stream.WriteMore()
-      }
-      stream.WriteObjectField(k)
+  stream.WriteObjectHead()
+  for k, v := range val {
+    stream.WriteObjectField(k)
     stream.WriteString(v)
-    }
-    stream.WriteObjectTail()
+    stream.WriteMore()
   }
+  stream.WriteObjectTail()
 }

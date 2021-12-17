@@ -29,5 +29,8 @@ func EmptyStruct_json_unmarshal_field(iter *jsoniter.Iterator, field string, out
 }
 func EmptyStruct_json_marshal(stream *jsoniter.Stream, val EmptyStruct) {
     stream.WriteObjectHead()
+    EmptyStruct_json_marshal_field(stream, val)
     stream.WriteObjectTail()
+}
+func EmptyStruct_json_marshal_field(stream *jsoniter.Stream, val EmptyStruct) {
 }
