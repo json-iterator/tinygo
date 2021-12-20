@@ -2,6 +2,18 @@ package main
 
 import jsoniter "github.com/json-iterator/tinygo"
 
+type RefNamedArray_json struct {
+}
+func (json RefNamedArray_json) Type() interface{} {
+  var val RefNamedArray
+  return val
+}
+func (json RefNamedArray_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  RefNamedArray_json_unmarshal(iter, out.(*RefNamedArray))
+}
+func (json RefNamedArray_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  RefNamedArray_json_marshal(stream, val.(RefNamedArray))
+}
 func RefNamedArray_json_unmarshal(iter *jsoniter.Iterator, out *RefNamedArray) {
   more := iter.ReadObjectHead()
   for more {
@@ -20,12 +32,13 @@ func RefNamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field string, o
   }
   return false
 }
-type RefNamedArray_json struct {
+func RefNamedArray_json_marshal(stream *jsoniter.Stream, val RefNamedArray) {
+    stream.WriteObjectHead()
+    RefNamedArray_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
 }
-func (json RefNamedArray_json) Type() interface{} {
-  var val RefNamedArray
-  return &val
-}
-func (json RefNamedArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  RefNamedArray_json_unmarshal(iter, val.(*RefNamedArray))
+func RefNamedArray_json_marshal_field(stream *jsoniter.Stream, val RefNamedArray) {
+    stream.WriteObjectField(`Value`)
+    NamedArray_json_marshal(stream, val.Value)
+    stream.WriteMore()
 }

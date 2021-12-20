@@ -3,6 +3,18 @@ package sub
 import jsoniter "github.com/json-iterator/tinygo"
 import value_tests "github.com/json-iterator/tinygo/value_tests"
 
+type EmbedOtherPkgNamedArray_json struct {
+}
+func (json EmbedOtherPkgNamedArray_json) Type() interface{} {
+  var val EmbedOtherPkgNamedArray
+  return val
+}
+func (json EmbedOtherPkgNamedArray_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  EmbedOtherPkgNamedArray_json_unmarshal(iter, out.(*EmbedOtherPkgNamedArray))
+}
+func (json EmbedOtherPkgNamedArray_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  EmbedOtherPkgNamedArray_json_marshal(stream, val.(EmbedOtherPkgNamedArray))
+}
 func EmbedOtherPkgNamedArray_json_unmarshal(iter *jsoniter.Iterator, out *EmbedOtherPkgNamedArray) {
   more := iter.ReadObjectHead()
   for more {
@@ -17,12 +29,10 @@ func EmbedOtherPkgNamedArray_json_unmarshal_field(iter *jsoniter.Iterator, field
   if value_tests.NamedArray_json_unmarshal_field(iter, field, &out.NamedArray) { return true }
   return false
 }
-type EmbedOtherPkgNamedArray_json struct {
+func EmbedOtherPkgNamedArray_json_marshal(stream *jsoniter.Stream, val EmbedOtherPkgNamedArray) {
+    stream.WriteObjectHead()
+    EmbedOtherPkgNamedArray_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
 }
-func (json EmbedOtherPkgNamedArray_json) Type() interface{} {
-  var val EmbedOtherPkgNamedArray
-  return &val
-}
-func (json EmbedOtherPkgNamedArray_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  EmbedOtherPkgNamedArray_json_unmarshal(iter, val.(*EmbedOtherPkgNamedArray))
+func EmbedOtherPkgNamedArray_json_marshal_field(stream *jsoniter.Stream, val EmbedOtherPkgNamedArray) {
 }

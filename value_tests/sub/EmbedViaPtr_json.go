@@ -3,6 +3,18 @@ package sub
 import jsoniter "github.com/json-iterator/tinygo"
 import value_tests "github.com/json-iterator/tinygo/value_tests"
 
+type EmbedViaPtr_json struct {
+}
+func (json EmbedViaPtr_json) Type() interface{} {
+  var val EmbedViaPtr
+  return val
+}
+func (json EmbedViaPtr_json) Unmarshal(iter *jsoniter.Iterator, out interface{}) {
+  EmbedViaPtr_json_unmarshal(iter, out.(*EmbedViaPtr))
+}
+func (json EmbedViaPtr_json) Marshal(stream *jsoniter.Stream, val interface{}) {
+  EmbedViaPtr_json_marshal(stream, val.(EmbedViaPtr))
+}
 func EmbedViaPtr_json_unmarshal(iter *jsoniter.Iterator, out *EmbedViaPtr) {
   more := iter.ReadObjectHead()
   for more {
@@ -22,12 +34,10 @@ func EmbedViaPtr_json_unmarshal_field(iter *jsoniter.Iterator, field string, out
   }
   return false
 }
-type EmbedViaPtr_json struct {
+func EmbedViaPtr_json_marshal(stream *jsoniter.Stream, val EmbedViaPtr) {
+    stream.WriteObjectHead()
+    EmbedViaPtr_json_marshal_field(stream, val)
+    stream.WriteObjectTail()
 }
-func (json EmbedViaPtr_json) Type() interface{} {
-  var val EmbedViaPtr
-  return &val
-}
-func (json EmbedViaPtr_json) Unmarshal(iter *jsoniter.Iterator, val interface{}) {
-  EmbedViaPtr_json_unmarshal(iter, val.(*EmbedViaPtr))
+func EmbedViaPtr_json_marshal_field(stream *jsoniter.Stream, val EmbedViaPtr) {
 }
