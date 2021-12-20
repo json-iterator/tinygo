@@ -187,6 +187,7 @@ func encodeStruct(typeName string, structType *ast.StructType) {
 func encodeStructField(structType *ast.StructType) {
 	for _, field := range structType.Fields.List {
 		if len(field.Names) == 0 {
+			encodeStructEmbedField(field.Type)
 			continue
 		}
 		fieldName := field.Names[0].Name
@@ -213,6 +214,34 @@ func encodeStructField(structType *ast.StructType) {
 		_f("    stream.WriteObjectField(`%s`)", encodedFieldName)
 		genEncodeStmt(field.Type, fmt.Sprintf("val.%s", fieldName))
 		_l("    stream.WriteMore()")
+	}
+}
+
+func encodeStructEmbedField(fieldType ast.Expr) {
+	switch x := fieldType.(type) {
+	case *ast.Ident:
+		isNotExported := unicode.IsLower(rune(x.Name[0]))
+		if !isNotExported {
+			_f("    %s_json_marshal_field(stream, val.%s)", x.Name, x.Name)
+		}
+	case *ast.StarExpr:
+		switch y := x.X.(type) {
+		case *ast.Ident:
+			isNotExported := unicode.IsLower(rune(y.Name[0]))
+			if isNotExported {
+				return
+			}
+			_f("    if val.%s != nil {", y.Name)
+			_f("      %s_json_marshal_field(stream, *val.%s)", y.Name, y.Name)
+			_l("    }")
+		default:
+			reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(fieldType)))
+			return
+		}
+	case *ast.SelectorExpr:
+	default:
+		reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(fieldType)))
+		return
 	}
 }
 

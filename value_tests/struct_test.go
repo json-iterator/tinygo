@@ -2,6 +2,7 @@ package value_tests
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	jsoniter "github.com/json-iterator/tinygo"
@@ -31,10 +32,13 @@ func Test_struct4(t *testing.T) {
 	jsonAdapter := jsoniter.CreateJsonAdapter(WithEmbedStruct_json{})
 	compareWithStdlib(`{"Field1":"hello","Field2":"world","Field3":"abc","Embed3":"123"}`,
 		jsonAdapter, &val1, &val2)
-	// bytes, _ := jsonAdapter.MarshalIndent(val2, "", "  ")
-	// if !strings.Contains(string(bytes), "Field1") {
-	// 	t.Fatal(string(bytes))
-	// }
+	bytes, _ := jsonAdapter.MarshalIndent(val2, "", "  ")
+	if !strings.Contains(string(bytes), "Field1") {
+		t.Fatal(string(bytes))
+	}
+	if !strings.Contains(string(bytes), "Field2") {
+		t.Fatal(string(bytes))
+	}
 }
 
 func Test_struct5(t *testing.T) {

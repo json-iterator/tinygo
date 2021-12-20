@@ -196,6 +196,10 @@ func decodeStructField(structType *ast.StructType) {
 		case *ast.StarExpr: // embed pointer
 			switch y := x.X.(type) {
 			case *ast.Ident:
+				isNotExported := unicode.IsLower(rune(y.Name[0]))
+				if isNotExported {
+					continue
+				}
 				_f("  var val%d %s", i, y.Name)
 				_f("  if %s_json_unmarshal_field(iter, field, &val%d) {", y.Name, i)
 				_f("    out.%s = new(%s)", y.Name, y.Name)
@@ -251,20 +255,8 @@ func decodeStructField(structType *ast.StructType) {
 				_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", nodeToString(x), x.Sel.Name)
 			}
 		case *ast.Ident: // embed value
-			if x.Name == "string" ||
-				x.Name == "bool" ||
-				x.Name == "int" ||
-				x.Name == "uint" ||
-				x.Name == "int64" ||
-				x.Name == "uint64" ||
-				x.Name == "int32" ||
-				x.Name == "uint32" ||
-				x.Name == "int16" ||
-				x.Name == "uint16" ||
-				x.Name == "int8" ||
-				x.Name == "uint8" ||
-				x.Name == "float64" ||
-				x.Name == "float32" {
+			isNotExported := unicode.IsLower(rune(x.Name[0]))
+			if isNotExported {
 				continue
 			}
 			_f("  if %s_json_unmarshal_field(iter, field, &out.%s) { return true }", x.Name, x.Name)

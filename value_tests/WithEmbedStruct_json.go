@@ -45,6 +45,10 @@ func WithEmbedStruct_json_marshal(stream *jsoniter.Stream, val WithEmbedStruct) 
     stream.WriteObjectTail()
 }
 func WithEmbedStruct_json_marshal_field(stream *jsoniter.Stream, val WithEmbedStruct) {
+    if val.WithEmbedStructBase1 != nil {
+      WithEmbedStructBase1_json_marshal_field(stream, *val.WithEmbedStructBase1)
+    }
+    WithEmbedStructBase2_json_marshal_field(stream, val.WithEmbedStructBase2)
     stream.WriteObjectField(`Field3`)
     stream.WriteString(val.Field3)
     stream.WriteMore()

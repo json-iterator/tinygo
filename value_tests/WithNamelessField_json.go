@@ -40,4 +40,8 @@ func WithNamelessField_json_marshal(stream *jsoniter.Stream, val WithNamelessFie
     stream.WriteObjectTail()
 }
 func WithNamelessField_json_marshal_field(stream *jsoniter.Stream, val WithNamelessField) {
+    WithNamelessField_f1_json_marshal_field(stream, val.WithNamelessField_f1)
+    if val.WithNamelessField_f2 != nil {
+      WithNamelessField_f2_json_marshal_field(stream, *val.WithNamelessField_f2)
+    }
 }
