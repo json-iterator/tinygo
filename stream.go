@@ -64,6 +64,14 @@ func (stream *Stream) WriteRawOrNull(s string) {
 	}
 }
 
+func (stream *Stream) WriteRawOrZero(s string) {
+	if s == "" {
+		stream.WriteRaw("0")
+	} else {
+		stream.WriteRaw(s)
+	}
+}
+
 // WriteNull write null to stream
 func (stream *Stream) WriteNull() {
 	stream.writeFourBytes('n', 'u', 'l', 'l')

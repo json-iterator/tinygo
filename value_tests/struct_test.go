@@ -77,3 +77,12 @@ func Test_struct8(t *testing.T) {
 	var val2 NamedStruct
 	compareWithStdlib(`{"Raw":["a",1]}`, jsoniter.CreateJsonAdapter(NamedStruct_json{}), &val1, &val2)
 }
+
+func Test_struct9(t *testing.T) {
+	var val1 EmbedNumberStruct
+	jsonAdapter := jsoniter.CreateJsonAdapter(EmbedNumberStruct_json{})
+	bytes, _ := jsonAdapter.MarshalIndent(val1, "", "")
+	if !strings.Contains(string(bytes), `{"Number":0}`) {
+		t.Fatal(string(bytes))
+	}
+}

@@ -59,7 +59,7 @@ func NamedStruct_json_marshal_field(stream *jsoniter.Stream, val NamedStruct) {
     if val.Price == nil {
        stream.WriteNull()
     } else {
-    stream.WriteRawOrNull(string(*val.Price))
+    stream.WriteRawOrZero(string(*val.Price))
     }
     stream.WriteMore()
     stream.WriteObjectField(`Raw`)

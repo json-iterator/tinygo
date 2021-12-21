@@ -238,7 +238,7 @@ func encodeStructEmbedField(fieldType ast.Expr) {
 		case *ast.SelectorExpr:
 			if y.Sel.Name == "Number" {
 				_l(`  stream.WriteObjectField("Number")`)
-				_l(`  stream.WriteRawOrNull((string)(*val.Number))`)
+				_l(`  stream.WriteRawOrZero((string)(*val.Number))`)
 				_l(`  stream.WriteMore()`)
 			} else if y.Sel.Name == "RawMessage" {
 				reportError(fmt.Errorf("embed json.RawMessage is not supported"))
@@ -260,7 +260,7 @@ func encodeStructEmbedField(fieldType ast.Expr) {
 	case *ast.SelectorExpr:
 		if x.Sel.Name == "Number" {
 			_l(`  stream.WriteObjectField("Number")`)
-			_l(`  stream.WriteRawOrNull((string)(val.Number))`)
+			_l(`  stream.WriteRawOrZero((string)(val.Number))`)
 			_l(`  stream.WriteMore()`)
 		} else if x.Sel.Name == "RawMessage" {
 			reportError(fmt.Errorf("embed json.RawMessage is not supported"))
@@ -304,7 +304,9 @@ func genEncodeStmt(node ast.Node, val string) {
 		genEncodeStmt(x.X, "*"+val)
 		_l("    }")
 	case *ast.SelectorExpr:
-		if x.Sel.Name == "Number" || x.Sel.Name == "RawMessage" {
+		if x.Sel.Name == "Number" {
+			_f("    stream.WriteRawOrZero(string(%s))", val)
+		} else if x.Sel.Name == "RawMessage" {
 			_f("    stream.WriteRawOrNull(string(%s))", val)
 		}
 	default:
