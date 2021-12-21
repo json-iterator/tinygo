@@ -3,6 +3,7 @@ package sub
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	jsoniter "github.com/json-iterator/tinygo"
@@ -42,6 +43,11 @@ func Test_EmbedOtherPkgNamedArray(t *testing.T) {
 	var val1 EmbedOtherPkgNamedArray
 	var val2 EmbedOtherPkgNamedArray
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(EmbedOtherPkgNamedArray_json{}), &val1, &val2)
+	jsonAdapter := jsoniter.CreateJsonAdapter(EmbedOtherPkgNamedArray_json{})
+	bytes, _ := jsonAdapter.MarshalIndent(val1, "", "  ")
+	if !strings.Contains(string(bytes), "NamedArray") {
+		t.Fatal(string(bytes))
+	}
 }
 
 func Test_EmbedViaPtr(t *testing.T) {
@@ -49,4 +55,9 @@ func Test_EmbedViaPtr(t *testing.T) {
 	var val1 EmbedViaPtr
 	var val2 EmbedViaPtr
 	compareWithStdlib(input, jsoniter.CreateJsonAdapter(EmbedViaPtr_json{}), &val1, &val2)
+	jsonAdapter := jsoniter.CreateJsonAdapter(EmbedViaPtr_json{})
+	bytes, _ := jsonAdapter.MarshalIndent(val1, "", "  ")
+	if !strings.Contains(string(bytes), "NamedArray") {
+		t.Fatal(string(bytes))
+	}
 }

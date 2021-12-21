@@ -34,4 +34,7 @@ func EmbedNumberStruct_json_marshal(stream *jsoniter.Stream, val EmbedNumberStru
     stream.WriteObjectTail()
 }
 func EmbedNumberStruct_json_marshal_field(stream *jsoniter.Stream, val EmbedNumberStruct) {
+  stream.WriteObjectField("Number")
+  stream.WriteRawOrNull((string)(val.Number))
+  stream.WriteMore()
 }

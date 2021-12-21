@@ -35,4 +35,5 @@ func EmbedOtherPkgNamedArray_json_marshal(stream *jsoniter.Stream, val EmbedOthe
     stream.WriteObjectTail()
 }
 func EmbedOtherPkgNamedArray_json_marshal_field(stream *jsoniter.Stream, val EmbedOtherPkgNamedArray) {
+  value_tests.NamedArray_json_marshal_field(stream, val.NamedArray)
 }

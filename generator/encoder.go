@@ -225,6 +225,7 @@ func encodeStructEmbedField(fieldType ast.Expr) {
 			_f("    %s_json_marshal_field(stream, val.%s)", x.Name, x.Name)
 		}
 	case *ast.StarExpr:
+		// TODO: handle nil pointer
 		switch y := x.X.(type) {
 		case *ast.Ident:
 			isNotExported := unicode.IsLower(rune(y.Name[0]))
@@ -234,11 +235,46 @@ func encodeStructEmbedField(fieldType ast.Expr) {
 			_f("    if val.%s != nil {", y.Name)
 			_f("      %s_json_marshal_field(stream, *val.%s)", y.Name, y.Name)
 			_l("    }")
+		case *ast.SelectorExpr:
+			if y.Sel.Name == "Number" {
+				_l(`  stream.WriteObjectField("Number")`)
+				_l(`  stream.WriteRawOrNull((string)(*val.Number))`)
+				_l(`  stream.WriteMore()`)
+			} else if y.Sel.Name == "RawMessage" {
+				reportError(fmt.Errorf("embed json.RawMessage is not supported"))
+				return
+			} else {
+				alias := nodeToString(y.X)
+				if path, ok := allImports[alias]; ok {
+					referencedImports[alias] = path
+				} else {
+					reportError(fmt.Errorf("unknown import: %s", alias))
+					return
+				}
+				_f("  %s_json_marshal_field(stream, *val.%s)", nodeToString(y), y.Sel.Name)
+			}
 		default:
 			reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(fieldType)))
 			return
 		}
 	case *ast.SelectorExpr:
+		if x.Sel.Name == "Number" {
+			_l(`  stream.WriteObjectField("Number")`)
+			_l(`  stream.WriteRawOrNull((string)(val.Number))`)
+			_l(`  stream.WriteMore()`)
+		} else if x.Sel.Name == "RawMessage" {
+			reportError(fmt.Errorf("embed json.RawMessage is not supported"))
+			return
+		} else {
+			alias := nodeToString(x.X)
+			if path, ok := allImports[alias]; ok {
+				referencedImports[alias] = path
+			} else {
+				reportError(fmt.Errorf("unknown import: %s", alias))
+				return
+			}
+			_f("  %s_json_marshal_field(stream, val.%s)", nodeToString(x), x.Sel.Name)
+		}
 	default:
 		reportError(fmt.Errorf("unknown embed field type: %s", nodeToString(fieldType)))
 		return

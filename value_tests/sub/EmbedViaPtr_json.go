@@ -40,4 +40,5 @@ func EmbedViaPtr_json_marshal(stream *jsoniter.Stream, val EmbedViaPtr) {
     stream.WriteObjectTail()
 }
 func EmbedViaPtr_json_marshal_field(stream *jsoniter.Stream, val EmbedViaPtr) {
+  value_tests.NamedArray_json_marshal_field(stream, *val.NamedArray)
 }

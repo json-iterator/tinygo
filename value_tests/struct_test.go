@@ -65,6 +65,11 @@ func Test_struct7(t *testing.T) {
 	if val1.Number != json.Number("100") {
 		t.Fatal(val1.Number)
 	}
+	jsonAdapter := jsoniter.CreateJsonAdapter(EmbedNumberStruct_json{})
+	bytes, _ := jsonAdapter.MarshalIndent(val1, "", "  ")
+	if !strings.Contains(string(bytes), "Number") {
+		t.Fatal(string(bytes))
+	}
 }
 
 func Test_struct8(t *testing.T) {
